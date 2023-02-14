@@ -94,7 +94,7 @@ class GenerateSchemaCommand extends Command
                 'key' => ['reportDate' => 1, 'fuelType' => 1, 'station._id' => 1],
                 'options' => ['unique' => true],
             ],
-            'fuelType' => ['key' => ['fuelType' => 1]],
+            'fuelType_postCode' => ['key' => ['fuelType' => 1, 'station.address.postCode' => 1]],
             'postCode' => ['key' => ['station.address.postCode' => 1]],
             'brand' => ['key' => ['station.brand' => 1]],
         ];
