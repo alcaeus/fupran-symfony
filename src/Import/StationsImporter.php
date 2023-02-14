@@ -28,7 +28,7 @@ final class StationsImporter extends Importer
             'address' => [
                 'street' => $rawData['street'],
                 'houseNumber' => $rawData['house_number'],
-                'postCode' => $rawData['post_code'],
+                'postCode' => (int) $rawData['post_code'],
                 'city' => $rawData['city'],
             ],
             'location' => [
