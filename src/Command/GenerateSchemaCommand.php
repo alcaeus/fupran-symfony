@@ -2,7 +2,6 @@
 
 namespace App\Command;
 
-use App\Pipeline\GetPriceReports;
 use MongoDB\Collection;
 use MongoDB\Database;
 use MongoDB\Model\IndexInfo;
@@ -22,7 +21,6 @@ class GenerateSchemaCommand extends Command
 {
     public function __construct(
         private readonly Database $database,
-        private readonly GetPriceReports $getPriceReports,
     ) {
         parent::__construct();
     }
@@ -32,9 +30,7 @@ class GenerateSchemaCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         $this->ensureStationIndexes($io);
-        $this->ensurePriceIndexes($io);
         $this->ensurePriceReportIndexes($io);
-        $this->createPriceReportView($io);
 
         $io->success('Schema is up to date!');
 
@@ -72,31 +68,14 @@ class GenerateSchemaCommand extends Command
         );
     }
 
-    private function ensurePriceIndexes(StyleInterface $output): void
-    {
-        $expectedIndexes = [
-            'reportDate' => ['key' => ['reportDate' => 1]],
-            'station' => ['key' => ['station' => 1]],
-        ];
-
-        $this->ensureIndexes(
-            $this->database->selectCollection('prices'),
-            $expectedIndexes,
-            $output,
-        );
-    }
-
     private function ensurePriceReportIndexes(StyleInterface $output): void
     {
         $expectedIndexes = [
-            // This key is used by the $merge stage when materialising price reports
-            'reportDate_fuelType_station' => [
-                'key' => ['reportDate' => 1, 'fuelType' => 1, 'station._id' => 1],
-                'options' => ['unique' => true],
-            ],
-            'fuelType_postCode' => ['key' => ['fuelType' => 1, 'station.address.postCode' => 1]],
-            'postCode' => ['key' => ['station.address.postCode' => 1]],
+            'station_reportDate' => ['key' => ['station._id' => 1, 'reportDate' => -1]],
+            'previous' => ['key' => ['previous._id' => 1]],
             'brand' => ['key' => ['station.brand' => 1]],
+            'postCode' => ['key' => ['station.address.postCode' => 1]],
+            'fuelType_postCode' => ['key' => ['fuelType' => 1, 'station.address.postCode' => 1]],
         ];
 
         $this->ensureIndexes(
@@ -104,25 +83,5 @@ class GenerateSchemaCommand extends Command
             $expectedIndexes,
             $output,
         );
-    }
-
-    private function createPriceReportView(StyleInterface $output): void
-    {
-        foreach ($this->database->listCollections() as $collectionInfo) {
-            if ($collectionInfo->getName() == 'priceReportsView') {
-                // Todo: check if pipeline is correct
-                return;
-            }
-        }
-
-        $output->text('Creating priceReports view...');
-        $this->database->createCollection(
-            'priceReportsView',
-            [
-                'pipeline' => $this->getPriceReports->getPipeline(),
-                'viewOn' => 'prices',
-            ],
-        );
-        $output->text('Done!');
     }
 }
