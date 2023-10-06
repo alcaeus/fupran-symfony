@@ -45,9 +45,9 @@ class ImportStationsCommand extends Command
 
         $start = microtime(true);
         if (is_file($fileOrDirectory)) {
-            $result = $this->importer->importFile($fileOrDirectory);
+            $result = $this->importer->importFile($fileOrDirectory, $output);
         } elseif (is_dir($fileOrDirectory)) {
-            $result = $this->importer->importDirectory($fileOrDirectory);
+            $result = $this->importer->importDirectory($fileOrDirectory, $output);
         } else {
             $io->error(sprintf('Cannot import file "%s"', $fileOrDirectory));
 

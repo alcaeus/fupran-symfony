@@ -6,8 +6,11 @@ use DirectoryIterator;
 use MongoDB\BSON\Binary;
 use MongoDB\Driver\BulkWrite;
 use MongoDB\Driver\Manager;
+use Symfony\Component\Console\Output\OutputInterface;
 use function hex2bin;
+use function iterator_to_array;
 use function str_replace;
+use function usort;
 
 abstract class Importer
 {
@@ -21,7 +24,7 @@ abstract class Importer
 
     abstract protected function getNamespace(): string;
 
-    final public function importDirectory(string $directory): ImportResult
+    final public function importDirectory(string $directory, ?OutputInterface $output = null): ImportResult
     {
         $result = new ImportResult();
 
@@ -32,7 +35,7 @@ abstract class Importer
             }
 
             if ($file->isDir()) {
-                $result = $result->withResult($this->importDirectory($file->getPathname()));
+                $result = $result->withResult($this->importDirectory($file->getPathname(), $output));
 
                 continue;
             }
@@ -41,22 +44,25 @@ abstract class Importer
                 continue;
             }
 
-            $result = $result->withResult($this->importFile($file->getPathname()));
+            $result = $result->withResult($this->importFile($file->getPathname(), $output));
         }
 
         return $result;
     }
 
-    final public function importFile(string $file): ImportResult
+    final public function importFile(string $file, ?OutputInterface $output = null): ImportResult
     {
+        $output?->writeln(sprintf('Importing file "%s"', $file));
+
         $resource = fopen($file, 'r');
         if (!$resource) {
             throw new \RuntimeException(sprintf('Could not read file "%s"', $file));
         }
 
+        $bulk = new BulkWrite(['ordered' => false]);
+
         try {
             $headers = fgetcsv($resource);
-            $bulk = new BulkWrite(['ordered' => false]);
 
             while ($row = fgetcsv($resource)) {
                 $this->storeDocument($bulk, array_combine($headers, $row));
@@ -64,8 +70,14 @@ abstract class Importer
         } finally {
             fclose($resource);
 
+            $output?->writeln(sprintf('Read %d records, importing now', $bulk->count()));
+
             $writeResult = $this->manager->executeBulkWrite($this->getNamespace(), $bulk);
-            return ImportResult::fromWriteResult($writeResult);
+            $importResult = ImportResult::fromWriteResult($writeResult);
+
+            $output?->writeln(sprintf('Inserted %d records, skipped %d records', $importResult->numInserted, $importResult->numSkipped));
+
+            return $importResult;
         }
     }
 
