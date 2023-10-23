@@ -38,8 +38,8 @@
             "config/routes/framework.yaml",
             "config/services.yaml",
             "public/index.php",
-            "src/Controller/.gitignore",
-            "src/Kernel.php"
+            "app/Controller/.gitignore",
+            "app/Kernel.php"
         ]
     },
     "symfony/maker-bundle": {
