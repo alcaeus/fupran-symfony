@@ -12,7 +12,8 @@ services:
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
         bind:
             $databaseName: '%env(MONGODB_DATABASE)%'
-            MongoDB\Collection $priceReports: '@db.collection.priceReports'
+            MongoDB\Database: '@mongodb.database.default.default'
+            MongoDB\Collection $priceReports: '@mongodb.collection.default.default.priceReports'
 
     # makes classes in app/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -25,14 +26,7 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-    MongoDB\Database:
-        factory: ['@mongodb.client.default', 'selectDatabase']
-        arguments: ['%env(MONGODB_DATABASE)%']
 
+    # TODO: should the bundle expose this? I think not...
     MongoDB\Driver\Manager:
         factory: ['@mongodb.client.default', 'getManager']
-
-    db.collection.priceReports:
-        class: MongoDB\Collection
-        factory: ['@MongoDB\Database', 'selectCollection']
-        arguments: ['priceReports']
