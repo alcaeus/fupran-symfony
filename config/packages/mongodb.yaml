@@ -1,0 +1,4 @@
+mongodb:
+  clients:
+    - id: 'default'
+      uri: '%env(MONGODB_URI)%'

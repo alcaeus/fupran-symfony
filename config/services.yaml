@@ -25,16 +25,12 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-    MongoDB\Client:
-        arguments:
-            $uri: '%env(MONGODB_URI)%'
-
     MongoDB\Database:
-        factory: ['@MongoDB\Client', 'selectDatabase']
+        factory: ['@mongodb.client.default', 'selectDatabase']
         arguments: ['%env(MONGODB_DATABASE)%']
 
     MongoDB\Driver\Manager:
-        factory: ['@MongoDB\Client', 'getManager']
+        factory: ['@mongodb.client.default', 'getManager']
 
     db.collection.priceReports:
         class: MongoDB\Collection

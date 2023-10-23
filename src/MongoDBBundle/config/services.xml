@@ -9,7 +9,17 @@
         <defaults autowire="true" autoconfigure="true"/>
 
         <service id="MongoDB\Bundle\Command\DebugCommand">
+            <argument type="tagged_locator" tag="mongodb.client" />
+
             <tag name="console.command" />
+        </service>
+
+        <service id="mongodb.prototype.client" class="MongoDB\Client">
+            <argument key="$uri" type="abstract">Should be defined by pass</argument>
+            <argument key="$uriOptions" type="abstract">Should be defined by pass</argument>
+            <argument key="$driverOptions" type="abstract">Should be defined by pass</argument>
+
+            <tag name="mongodb.client" />
         </service>
     </services>
 </container>
