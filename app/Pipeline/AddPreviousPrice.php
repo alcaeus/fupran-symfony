@@ -2,139 +2,121 @@
 
 namespace App\Pipeline;
 
+use MongoDB\Builder\BuilderEncoder;
+use MongoDB\Builder\Expression;
+use MongoDB\Builder\Query;
+use MongoDB\Builder\Stage;
+use MongoDB\Builder\Type\StageInterface;
+
+use function MongoDB\object;
+
 final class AddPreviousPrice implements Pipeline
 {
     /** @return array<object> */
     public function getPipeline(): array
     {
-        return [
+        $pipeline = new \MongoDB\Builder\Pipeline(
             $this->matchOnlyMissingPreviousPriceRecords(),
-            $this->lookupPrice(),
-            $this->extractFirstPriceReport(),
+            $this->lookupSinglePrice(),
             $this->addChangeFields(),
             $this->removeUnchangedFields(),
             $this->mergeIntoPriceReports(),
-        ];
+        );
+
+        return (new BuilderEncoder())->encode($pipeline);
     }
 
-    private function matchOnlyMissingPreviousPriceRecords(): object
+    private function matchOnlyMissingPreviousPriceRecords(): StageInterface
     {
-        return (object) [
-            '$match' => [
-                'previous._id' => ['$exists' => false],
-            ],
-        ];
+        return Stage::match(...['previous._id' => ['$exists' => false]]);
     }
 
-    private function lookupPrice(): object
+    private function lookupSinglePrice(): \MongoDB\Builder\Pipeline
     {
-        return (object) [
-            '$lookup' => [
-                'from' => 'priceReports',
-                'localField' => 'station._id',
-                'foreignField' => 'station._id',
-                'as' => 'previous',
-                'let' => ['reportDate' => '$reportDate', 'fuelType' => '$fuelType'],
-                'pipeline' => [
+        return new \MongoDB\Builder\Pipeline(
+            Stage::lookup(
+                as: 'previous',
+                from: 'priceReports',
+                localField: 'station._id',
+                foreignField: 'station._id',
+                let: object(
+                    reportDate: Expression::dateFieldPath('reportDate'),
+                    fuelType: Expression::stringFieldPath('fuelType'),
+                ),
+                pipeline: new \MongoDB\Builder\Pipeline(
                     $this->onlyPreviousRecords(),
-                    $this->sortByReportDate(),
-                    $this->limitToSingleResult(),
+                    # TODO: Should be able to pass sort specification using variadic args
+                    Stage::sort(object(reportDate: -1)),
+                    Stage::limit(1),
                     $this->removeUnnecessaryPriceFields(),
-                ],
-            ],
-        ];
+                ),
+            ),
+            # Unwind the array - this works better than $unwind in case somebody removes the $limit stage in $lookup
+            Stage::addFields(
+                previous: Expression::arrayElemAt(
+                    Expression::arrayFieldPath('previous'),
+                    0,
+                ),
+            ),
+        );
     }
 
-    private function onlyPreviousRecords(): object
+    private function onlyPreviousRecords(): StageInterface
     {
-        return (object) [
-            '$match' => [
-                '$and' => [
-                    [
-                        '$expr' => [
-                            '$lt' => ['$reportDate', '$$reportDate'],
-                        ]
-                    ],
-                    [
-                        '$expr' => [
-                            '$eq' => ['$fuelType', '$$fuelType'],
-                        ]
-                    ],
-                ],
-            ],
-        ];
+        return Stage::match(
+            Query::query(Query::expr(Expression::lt(
+                Expression::dateFieldPath('reportDate'),
+                Expression::variable('reportDate'),
+            ))),
+            Query::query(Query::expr(Expression::eq(
+                Expression::stringFieldPath('fuelType'),
+                Expression::variable('fuelType'),
+            ))),
+        );
     }
 
-    private function sortByReportDate(): object
+    private function removeUnnecessaryPriceFields(): StageInterface
     {
-        return (object) ['$sort' => ['reportDate' => -1]];
+        return Stage::project(
+            _id: true,
+            reportDate: true,
+            price: true,
+        );
     }
 
-    private function limitToSingleResult(): object
+    private function addChangeFields(): StageInterface
     {
-        return (object) ['$limit' => 1];
+        return Stage::addFields(
+            change: object(
+                seconds: Expression::dateDiff(
+                    startDate: Expression::dateFieldPath('previous.reportDate'),
+                    endDate: Expression::dateFieldPath('reportDate'),
+                    unit: 'second',
+                ),
+                price: Expression::subtract(
+                    Expression::doubleFieldPath('price'),
+                    Expression::doubleFieldPath('previous.price'),
+                ),
+            )
+        );
     }
 
-    private function removeUnnecessaryPriceFields(): object
+    private function removeUnchangedFields(): StageInterface
     {
-        return (object) [
-            '$project' => [
-                '_id' => true,
-                'reportDate' => true,
-                'price' => true,
-            ],
-        ];
+        return Stage::project(
+            _id: true,
+            previous: true,
+            change: true,
+        );
     }
 
-    private function extractFirstPriceReport(): object
+    private function mergeIntoPriceReports(): StageInterface
     {
-        return (object) [
-            '$addFields' => [
-                'previous' => ['$first' => '$previous'],
-            ],
-        ];
-    }
-
-    private function addChangeFields(): object
-    {
-        return (object) [
-            '$addFields' => [
-                'change' => [
-                    'seconds' => [
-                        '$dateDiff' => [
-                            'startDate' => '$previous.reportDate',
-                            'endDate' => '$reportDate',
-                            'unit' => 'second',
-                        ],
-                    ],
-                    'price' => [
-                        '$subtract' => ['$price', '$previous.price']
-                    ],
-                ],
-            ],
-        ];
-    }
-
-    private function removeUnchangedFields(): object
-    {
-        return (object) [
-            '$project' => [
-                '_id' => true,
-                'previous' => true,
-                'change' => true,
-            ],
-        ];
-    }
-
-    private function mergeIntoPriceReports(): object
-    {
-        return (object) [
-            '$merge' => [
-                'into' => 'priceReports',
-                'on' => '_id',
-                'whenMatched' => 'merge',
-                'whenNotMatched' => 'discard',
-            ],
-        ];
+        return Stage::merge(
+            into: 'priceReports',
+            on: '_id',
+            whenMatched: 'merge',
+            whenNotMatched: 'discard',
+        );
     }
 }
