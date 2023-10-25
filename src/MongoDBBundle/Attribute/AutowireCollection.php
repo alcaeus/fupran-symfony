@@ -2,6 +2,7 @@
 
 namespace MongoDB\Bundle\Attribute;
 
+use MongoDB\Bundle\DependencyInjection\MongoDBExtension;
 use MongoDB\Collection;
 use Symfony\Component\DependencyInjection\Attribute\AutowireCallable;
 use Symfony\Component\DependencyInjection\Definition;
@@ -17,9 +18,10 @@ class AutowireCollection extends AutowireCallable
         private array $options = [],
         bool|string $lazy = false,
     ) {
-        $clientServiceId = 'mongodb.client.' . $clientId;
-
-        parent::__construct([new Reference($clientServiceId), 'selectCollection'], lazy: $lazy);
+        parent::__construct(
+            [new Reference(MongoDBExtension::getClientServiceName($clientId)), 'selectCollection'],
+            lazy: $lazy,
+        );
     }
 
     public function buildDefinition(mixed $value, ?string $type, \ReflectionParameter $parameter): Definition

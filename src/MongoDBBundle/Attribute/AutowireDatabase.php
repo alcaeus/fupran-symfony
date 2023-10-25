@@ -2,6 +2,7 @@
 
 namespace MongoDB\Bundle\Attribute;
 
+use MongoDB\Bundle\DependencyInjection\MongoDBExtension;
 use MongoDB\Database;
 use Symfony\Component\DependencyInjection\Attribute\AutowireCallable;
 use Symfony\Component\DependencyInjection\Definition;
@@ -16,9 +17,10 @@ class AutowireDatabase extends AutowireCallable
         private array $options = [],
         bool|string $lazy = false,
     ) {
-        $clientServiceId = 'mongodb.client.' . $clientId;
-
-        parent::__construct([new Reference($clientServiceId), 'selectDatabase'], lazy: $lazy);
+        parent::__construct(
+            [new Reference(MongoDBExtension::getClientServiceName($clientId)), 'selectDatabase'],
+            lazy: $lazy,
+        );
     }
 
     public function buildDefinition(mixed $value, ?string $type, \ReflectionParameter $parameter): Definition

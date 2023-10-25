@@ -30,6 +30,12 @@ class MongoDBExtension extends Extension
         $this->createClients($config['clients'], $container);
     }
 
+    /** @internal */
+    public static function getClientServiceName(string $clientId): string
+    {
+        return sprintf('mongodb.client.%s', $clientId);
+    }
+
     private function createClients(array $clients, ContainerBuilder $container): void
     {
         $clientPrototype = $container->getDefinition('mongodb.prototype.client');
