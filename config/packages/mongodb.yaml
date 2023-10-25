@@ -2,10 +2,3 @@ mongodb:
   clients:
     - id: 'default'
       uri: '%env(MONGODB_URI)%'
-      databases:
-        - id: 'default'
-          name: '%env(MONGODB_DATABASE)%'
-          collections:
-            # TODO: Short-hand syntax does not work yet
-            # - 'priceReports'
-            - name: 'priceReports'

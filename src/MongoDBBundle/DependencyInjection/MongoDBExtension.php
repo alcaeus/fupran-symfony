@@ -41,39 +41,12 @@ class MongoDBExtension extends Extension
         $clientPrototype = $container->getDefinition('mongodb.prototype.client');
 
         foreach ($clients as $clientId => $clientConfiguration) {
-            $clientServiceName = sprintf('mongodb.client.%s', $clientId);
-
             $clientDefinition = clone $clientPrototype;
             $clientDefinition->setArgument('$uri', $clientConfiguration['uri']);
             $clientDefinition->setArgument('$uriOptions', $clientConfiguration['uriOptions'] ?? []);
             $clientDefinition->setArgument('$driverOptions', $clientConfiguration['driverOptions'] ?? []);
 
-            $container->setDefinition($clientServiceName, $clientDefinition);
-
-            foreach ($clientConfiguration['databases'] as $databaseId => $databaseConfiguration) {
-                $databaseName = $databaseConfiguration['name'] ?? $databaseId;
-                $databaseServiceName = sprintf('mongodb.database.%s.%s', $clientId, $databaseId);
-
-                $databaseDefinition = new Definition(Database::class);
-                $databaseDefinition->setFactory([$clientDefinition, 'selectDatabase']);
-                $databaseDefinition->setArgument('$databaseName', $databaseName);
-                $databaseDefinition->setArgument('$options', $databaseConfiguration['options'] ?? []);
-                $databaseDefinition->addTag('mongodb.database', ['clientName' => $clientId]);
-
-                $container->setDefinition($databaseServiceName, $databaseDefinition);
-
-                foreach ($databaseConfiguration['collections'] as $collectionName => $collectionConfiguration) {
-                    $collectionServiceName = sprintf('mongodb.collection.%s.%s.%s', $clientId, $databaseId, $collectionName);
-
-                    $collectionDefinition = new Definition(Collection::class);
-                    $collectionDefinition->setFactory([$databaseDefinition, 'selectCollection']);
-                    $collectionDefinition->setArgument('$collectionName', $collectionName);
-                    $collectionDefinition->setArgument('$options', $collectionConfiguration['options'] ?? []);
-                    $collectionDefinition->addTag('mongodb.collection', ['clientName' => $clientId, 'databaseName' => $databaseName]);
-
-                    $container->setDefinition($collectionServiceName, $collectionDefinition);
-                }
-            }
+            $container->setDefinition(self::getClientServiceName($clientId), $clientDefinition);
         }
 
         // Remove the prototype definition as it's tagged as client
