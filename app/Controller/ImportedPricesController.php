@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Codec\ImportedPriceCodec;
+use App\Document\ImportedPrice;
 use MongoDB\BSON\ObjectId;
 use MongoDB\Bundle\Attribute\AutowireCollection;
 use MongoDB\Collection;
@@ -18,17 +18,15 @@ class ImportedPricesController extends AbstractController
             clientId: 'default',
             databaseName: '%databaseName%',
             collectionName: 'priceReports',
-            # TODO: support using controller DI values in options
-//            options: ['codec' => '@' . ImportedPriceCodec::class],
+            documentClass: ImportedPrice::class,
         )]
         private readonly Collection $collection,
-        private readonly ImportedPriceCodec $codec,
     ) {}
 
     #[Route('/prices', name: 'app_imported_prices')]
     public function index(): JsonResponse
     {
-        $prices = $this->collection->find([], ['codec' => $this->codec, 'limit' => 10]);
+        $prices = $this->collection->find([], ['limit' => 10]);
 
         return $this->json(iterator_to_array($prices));
     }
@@ -36,7 +34,7 @@ class ImportedPricesController extends AbstractController
     #[Route('/prices/{id}', name: 'app_imported_price_show')]
     public function show(string $id): JsonResponse
     {
-        $price = $this->collection->findOne(['_id' => new ObjectId($id)], ['codec' => $this->codec]);
+        $price = $this->collection->findOne(['_id' => new ObjectId($id)]);
 
         return $this->json($price);
     }

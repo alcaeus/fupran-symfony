@@ -2,7 +2,10 @@
 
 namespace MongoDB\Bundle\Attribute;
 
+use Exception;
+use MongoDB\Bundle\Codec\MappedDocumentCodec;
 use MongoDB\Bundle\DependencyInjection\MongoDBExtension;
+use MongoDB\Bundle\Metadata\Document as DocumentMetadata;
 use MongoDB\Collection;
 use Symfony\Component\DependencyInjection\Attribute\AutowireCallable;
 use Symfony\Component\DependencyInjection\Definition;
@@ -15,9 +18,14 @@ class AutowireCollection extends AutowireCallable
         string $clientId,
         private string $databaseName,
         private string $collectionName,
+        private ?string $documentClass = null,
         private array $options = [],
         bool|string $lazy = false,
     ) {
+        if ($this->documentClass !== null && isset($this->options['codec'])) {
+            throw new Exception('Cannot combine codec option and documentClass');
+        }
+
         parent::__construct(
             [new Reference(MongoDBExtension::getClientServiceName($clientId)), 'selectCollection'],
             lazy: $lazy,
@@ -26,9 +34,23 @@ class AutowireCollection extends AutowireCallable
 
     public function buildDefinition(mixed $value, ?string $type, \ReflectionParameter $parameter): Definition
     {
+        $options = $this->options;
+        if ($this->documentClass) {
+            $metadataDefinition = new Definition(DocumentMetadata::class);
+            $metadataDefinition
+                ->setFactory([new Reference('mongodb.metadata.document_metadata_factory'), 'getMetadata'])
+                ->setArguments([$this->documentClass]);
+
+            $codecDefinition = new Definition(MappedDocumentCodec::class);
+            $codecDefinition
+                ->setArguments([$metadataDefinition]);
+
+            $options['codec'] = $codecDefinition;
+        }
+
         return (new Definition($type = \is_string($this->lazy) ? $this->lazy : ($type ?: Collection::class)))
             ->setFactory($value)
-            ->setArguments([$this->databaseName, $this->collectionName, $this->options])
+            ->setArguments([$this->databaseName, $this->collectionName, $options])
             ->setLazy($this->lazy);
     }
 }

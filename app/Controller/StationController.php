@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Codec\StationCodec;
+use App\Document\Station;
 use MongoDB\BSON\Binary;
 use MongoDB\Bundle\Attribute\AutowireCollection;
 use MongoDB\Collection;
@@ -20,17 +20,15 @@ class StationController extends AbstractController
             clientId: 'default',
             databaseName: '%databaseName%',
             collectionName: 'stations',
-            # TODO: support using controller DI values in options
-//            options: ['codec' => '@' . ImportedPriceCodec::class],
+            documentClass: Station::class,
         )]
         private readonly Collection $collection,
-        private readonly StationCodec $codec,
     ) {}
 
     #[Route('/stations', name: 'app_stations')]
     public function index(): JsonResponse
     {
-        $stations = $this->collection->find([], ['codec' => $this->codec, 'limit' => 10]);
+        $stations = $this->collection->find([], ['limit' => 10]);
 
         return $this->json(iterator_to_array($stations));
     }
@@ -38,7 +36,7 @@ class StationController extends AbstractController
     #[Route('/stations/{id}', name: 'app_stations_show')]
     public function show(string $id): JsonResponse
     {
-        $station = $this->collection->findOne(['_id' => new Binary(base64_decode($id), Binary::TYPE_UUID)], ['codec' => $this->codec]);
+        $station = $this->collection->findOne(['_id' => new Binary(base64_decode($id), Binary::TYPE_UUID)]);
 
         return $this->json($station);
     }
