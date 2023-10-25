@@ -18,9 +18,9 @@ class Station
         public readonly string $name,
         #[Field]
         public readonly string $brand,
-        #[Field(codec: new AddressCodec())]
+        #[Field]
         public readonly Address $address,
-        #[Field(codec: new LocationCodec())]
+        #[Field]
         public readonly Location $location,
     ) {
     }

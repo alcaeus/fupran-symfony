@@ -21,7 +21,7 @@ final class Document
         $this->fieldMappings = $fieldMappings;
     }
 
-    public static function fromAttributes(string $className): self
+    public static function fromAttributes(string $className, DocumentMetadataFactory $metadataFactory): self
     {
         $reflection = new ReflectionClass($className);
         if (! $reflection->getAttributes(DocumentAttribute::class)) {
@@ -30,7 +30,7 @@ final class Document
 
         $fieldMappings = [];
         foreach ($reflection->getProperties() as $property) {
-            $fieldMappings[] = Field::fromAttributes($property);
+            $fieldMappings[] = Field::fromAttributes($property, $metadataFactory);
         }
 
         return new self(
