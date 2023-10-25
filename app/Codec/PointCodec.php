@@ -1,0 +1,47 @@
+<?php
+
+namespace App\Codec;
+
+use GeoJson\Geometry\Point;
+use MongoDB\BSON\Document;
+use MongoDB\Codec\Codec;
+use MongoDB\Codec\DecodeIfSupported;
+use MongoDB\Codec\EncodeIfSupported;
+use MongoDB\Exception\UnsupportedValueException;
+
+class PointCodec implements Codec
+{
+    use DecodeIfSupported;
+    use EncodeIfSupported;
+
+    public function canDecode($value): bool
+    {
+        return $value instanceof Document;
+    }
+
+    public function canEncode($value): bool
+    {
+        return $value instanceof Point;
+    }
+
+    public function decode($value): Point
+    {
+        if (! $this->canDecode($value)) {
+            throw UnsupportedValueException::invalidDecodableValue($value);
+        }
+
+        return new Point($value->coordinates->toPHP());
+    }
+
+    public function encode($value)
+    {
+        if (! $this->canEncode($value)) {
+            throw UnsupportedValueException::invalidEncodableValue($value);
+        }
+
+        return Document::fromPHP([
+            'type' => 'Point',
+            'coordinates' => $value->getCoordinates(),
+        ]);
+    }
+}
