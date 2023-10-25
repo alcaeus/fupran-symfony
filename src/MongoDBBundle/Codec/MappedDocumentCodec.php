@@ -3,6 +3,7 @@
 namespace MongoDB\Bundle\Codec;
 
 use MongoDB\BSON\Document;
+use MongoDB\Bundle\Metadata\Document as DocumentMetadata;
 use MongoDB\Codec\Codec;
 use MongoDB\Codec\DecodeIfSupported;
 use MongoDB\Codec\DocumentCodec;
@@ -10,22 +11,17 @@ use MongoDB\Codec\EncodeIfSupported;
 use MongoDB\Exception\UnsupportedValueException;
 use ReflectionClass;
 
-class PropertyMappedDocumentCodec implements DocumentCodec
+class MappedDocumentCodec implements DocumentCodec
 {
     use DecodeIfSupported;
     use EncodeIfSupported;
 
     private ReflectionClass $reflection;
 
-    /** @var array<string,?Codec> */
-    private array $propertyMap;
-
     public function __construct(
-        private readonly string $className,
-        ?Codec ...$propertyMap,
+        private readonly DocumentMetadata $metadata,
     ) {
-        $this->reflection = new ReflectionClass($className);
-        $this->propertyMap = $propertyMap;
+        $this->reflection = new ReflectionClass($this->metadata->className);
     }
 
     public function canDecode($value): bool
@@ -35,7 +31,7 @@ class PropertyMappedDocumentCodec implements DocumentCodec
 
     public function canEncode($value): bool
     {
-        return $value instanceof $this->className;
+        return $value instanceof $this->metadata->className;
     }
 
     public function decode($value): object
@@ -44,18 +40,16 @@ class PropertyMappedDocumentCodec implements DocumentCodec
             throw UnsupportedValueException::invalidDecodableValue($value);
         }
 
-        $object = $this->reflection->newInstanceWithoutConstructor();
+        $object = $this->metadata->getNewInstance();
 
-        foreach ($this->propertyMap as $property => $codec) {
-            if (! isset($value->$property)) {
+        foreach ($this->metadata->fieldMappings as $fieldMapping) {
+            if (! $fieldMapping->existsInBson($value)) {
                 continue;
             }
 
-            $decodedValue = $codec
-                ? $codec->decode($value->$property)
-                : $value->$property;
+            $decodedValue = $fieldMapping->readFromBson($value);
 
-            $this->reflection->getProperty($property)->setValue($object, $decodedValue);
+            $this->reflection->getProperty($fieldMapping->propertyName)->setValue($object, $decodedValue);
         }
 
         return $object;
@@ -69,18 +63,18 @@ class PropertyMappedDocumentCodec implements DocumentCodec
 
         $data = [];
 
-        foreach ($this->propertyMap as $property => $codec) {
-            $value = $this->reflection->getProperty($property)->getValue($value);
-            if ($value === null) {
+        foreach ($this->metadata->fieldMappings as $fieldMapping) {
+            $propertyValue = $this->reflection->getProperty($fieldMapping->propertyName)->getValue($value);
+            if ($propertyValue === null) {
                 continue;
             }
 
-            $encodedValue = $codec
-                ? $codec->encode($value->$property)
-                : $value->$property;
+            $encodedValue = $fieldMapping->codec
+                ? $fieldMapping->codec->encode($propertyValue)
+                : $propertyValue;
 
             if ($encodedValue !== null) {
-                $data[$property] = $encodedValue;
+                $data[$fieldMapping->propertyName] = $encodedValue;
             }
         }
 

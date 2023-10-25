@@ -8,8 +8,7 @@ use MongoDB\BSON\ObjectId;
 
 class ImportedPrice
 {
-    // TODO: Allow renaming fields
-    public readonly ObjectId $_id;
+    public readonly ObjectId $id;
 
     public function __construct(
         public readonly DateTimeImmutable $reportDate,
@@ -17,6 +16,6 @@ class ImportedPrice
         public readonly string $fuelType,
         public readonly float $price,
     ) {
-        $this->_id = new ObjectId();
+        $this->id = new ObjectId();
     }
 }
