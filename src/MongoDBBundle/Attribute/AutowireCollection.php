@@ -36,14 +36,10 @@ class AutowireCollection extends AutowireCallable
     {
         $options = $this->options;
         if ($this->documentClass) {
-            $metadataDefinition = new Definition(DocumentMetadata::class);
-            $metadataDefinition
-                ->setFactory([new Reference('mongodb.metadata.document_metadata_factory'), 'getMetadata'])
-                ->setArguments([$this->documentClass]);
-
             $codecDefinition = new Definition(MappedDocumentCodec::class);
             $codecDefinition
-                ->setArguments([$metadataDefinition]);
+                ->setFactory([new Reference('mongodb.codec.mapped_document_codec_factory'), 'getCodec'])
+                ->setArguments([$this->documentClass]);
 
             $options['codec'] = $codecDefinition;
         }

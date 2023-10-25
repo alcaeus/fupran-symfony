@@ -23,5 +23,9 @@
         </service>
 
         <service id="mongodb.metadata.document_metadata_factory" class="MongoDB\Bundle\Metadata\DocumentMetadataFactory" />
+
+        <service id="mongodb.codec.mapped_document_codec_factory" class="MongoDB\Bundle\Codec\MappedDocumentCodecFactory">
+            <argument key="$metadataFactory" type="service" id="mongodb.metadata.document_metadata_factory" />
+        </service>
     </services>
 </container>
