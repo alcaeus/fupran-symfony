@@ -3,7 +3,9 @@
 namespace MongoDB\Bundle\Metadata;
 
 use MongoDB\BSON\Document as BSONDocument;
+use MongoDB\Bundle\Attribute\Field as FieldAttribute;
 use MongoDB\Codec\Codec;
+use ReflectionProperty;
 
 final class Field
 {
@@ -15,6 +17,22 @@ final class Field
         public readonly ?Codec $codec = null,
     ) {
         $this->fieldName = $fieldName ?? $this->propertyName;
+    }
+
+    public static function fromAttributes(ReflectionProperty $property): ?self
+    {
+        $attributes = $property->getAttributes(FieldAttribute::class);
+        if (! $attributes) {
+            return null;
+        }
+
+        $attribute = $attributes[0]->newInstance();
+
+        return new self(
+            $property->getName(),
+            $attribute->name,
+            $attribute->codec,
+        );
     }
 
     public function existsInBson(BSONDocument $bson): bool
