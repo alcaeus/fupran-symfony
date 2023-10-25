@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Pipeline\DenormalizeStations;
+use MongoDB\Bundle\Attribute\AutowireCollection;
 use MongoDB\Collection;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -19,6 +20,11 @@ use function sprintf;
 class DenormalizeStationsCommand extends Command
 {
     public function __construct(
+        #[AutowireCollection(
+            clientId: 'default',
+            databaseName: '%databaseName%',
+            collectionName: 'priceReports'
+        )]
         private readonly Collection $priceReports,
         private readonly DenormalizeStations $pipeline,
     ) {

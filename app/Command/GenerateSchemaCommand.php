@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use MongoDB\Bundle\Attribute\AutowireDatabase;
 use MongoDB\Collection;
 use MongoDB\Database;
 use MongoDB\Model\IndexInfo;
@@ -20,6 +21,7 @@ use function iterator_to_array;
 class GenerateSchemaCommand extends Command
 {
     public function __construct(
+        #[AutowireDatabase(clientId: 'default', databaseName: '%databaseName%')]
         private readonly Database $database,
     ) {
         parent::__construct();
