@@ -4,6 +4,7 @@ namespace MongoDB\Bundle\Codec;
 
 use MongoDB\BSON\Document;
 use MongoDB\Bundle\Metadata\Document as DocumentMetadata;
+use MongoDB\Bundle\Metadata\Field;
 use MongoDB\Codec\DecodeIfSupported;
 use MongoDB\Codec\DocumentCodec;
 use MongoDB\Codec\EncodeIfSupported;
@@ -39,16 +40,12 @@ class MappedDocumentCodec implements DocumentCodec
             throw UnsupportedValueException::invalidDecodableValue($value);
         }
 
-        $object = $this->metadata->getNewInstance();
+        $object = $this->metadata->createNewInstance();
 
-        foreach ($this->metadata->fieldMappings as $fieldMapping) {
-            if (! $fieldMapping->existsInBson($value)) {
-                continue;
-            }
-
-            $decodedValue = $fieldMapping->readFromBson($value);
-            $fieldMapping->writeToObject($object, $decodedValue);
-        }
+        array_map(
+            fn (Field $field) => $field->readFromBSON($value, $object),
+            $this->metadata->persistedFields,
+        );
 
         return $object;
     }
@@ -61,14 +58,12 @@ class MappedDocumentCodec implements DocumentCodec
 
         $data = [];
 
-        foreach ($this->metadata->fieldMappings as $fieldMapping) {
-            $propertyValue = $fieldMapping->readFromObject($value);
-            if ($propertyValue === null) {
-                continue;
-            }
-
-            $fieldMapping->writeToBson($data, $propertyValue);
-        }
+        array_map(
+            function (Field $field) use (&$data, $value): void {
+                $field->writeToBSON($data, $value);
+            },
+            $this->metadata->persistedFields,
+        );
 
         return Document::fromPHP($data);
     }

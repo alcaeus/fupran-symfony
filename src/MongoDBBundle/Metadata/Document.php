@@ -2,45 +2,74 @@
 
 namespace MongoDB\Bundle\Metadata;
 
-use Exception;
-use MongoDB\Bundle\Attribute\Document as DocumentAttribute;
+use LogicException;
 use ReflectionClass;
+use function array_filter;
+use function array_flip;
+use function array_map;
+use function array_merge;
+use function array_values;
+use function assert;
+use function sprintf;
 
 final class Document
 {
-    private readonly ReflectionClass $reflection;
+    private readonly ReflectionClass $reflectionClass;
 
-    /** @var array<string,Field> */
-    public readonly array $fieldMappings;
+    /** @var Field[] */
+    public readonly array $fields;
+
+    /** @var Field[] */
+    public readonly array $persistedFields;
+
+    /** @var string[] */
+    public readonly array $persistedFieldNames;
 
     public function __construct(
         public readonly string $className,
-        Field ...$fieldMappings,
+        public readonly ?Field $id = null,
+        Field ...$fields,
     ) {
-        $this->reflection = new ReflectionClass($this->className);
-        $this->fieldMappings = $fieldMappings;
-    }
+        $this->reflectionClass = new ReflectionClass($this->className);
 
-    public static function fromAttributes(string $className, DocumentMetadataFactory $metadataFactory): self
-    {
-        $reflection = new ReflectionClass($className);
-        if (! $reflection->getAttributes(DocumentAttribute::class)) {
-            throw new Exception(sprintf('Class "%s" is not mapped as a document class.', $className));
+        if ($this->id !== null) {
+            assert($this->id->name === '_id');
         }
 
-        $fieldMappings = [];
-        foreach ($reflection->getProperties() as $property) {
-            $fieldMappings[] = Field::fromAttributes($property, $metadataFactory);
-        }
+        $this->fields = array_values($fields);
 
-        return new self(
-            $className,
-            ...array_filter($fieldMappings),
+        $this->persistedFields = array_filter(
+            array_merge([$this->id], $this->fields),
+        );
+
+        $this->persistedFieldNames = array_flip(
+            array_map(
+                fn (Field $field) => $field->name,
+                $this->persistedFields,
+            ),
         );
     }
 
-    public function getNewInstance(): object
+    public function createNewInstance(): object
     {
-        return $this->reflection->newInstanceWithoutConstructor();
+        return $this->reflectionClass->newInstanceWithoutConstructor();
+    }
+
+    public function getField(string $fieldName): Field
+    {
+        if (!$this->hasField($fieldName)) {
+            throw new LogicException(sprintf(
+                'No field named "%s" was mapped in document class "%s".',
+                $fieldName,
+                $this->reflectionClass->name,
+            ));
+        }
+
+        return $this->persistedFields[$this->persistedFieldNames[$fieldName]];
+    }
+
+    public function hasField(string $fieldName): bool
+    {
+        return isset($this->persistedFieldNames[$fieldName]);
     }
 }

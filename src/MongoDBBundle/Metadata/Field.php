@@ -3,88 +3,77 @@
 namespace MongoDB\Bundle\Metadata;
 
 use MongoDB\BSON\Document as BSONDocument;
-use MongoDB\Bundle\Attribute\Field as FieldAttribute;
-use MongoDB\Bundle\Codec\MappedDocumentCodec;
+use MongoDB\Bundle\ValueAccessor\ValueGetter;
+use MongoDB\Bundle\ValueAccessor\ValueSetter;
+use LogicException;
 use MongoDB\Codec\Codec;
-use ReflectionNamedType;
-use ReflectionProperty;
 
 final class Field
 {
-    public readonly string $propertyName;
-    public readonly string $fieldName;
-
     public function __construct(
-        private readonly ReflectionProperty $property,
-        ?string $fieldName = null,
-        private readonly ?Codec $codec = null,
+        public readonly string $name,
+        public readonly ?Codec $codec = null,
+        public readonly ?ValueGetter $getter = null,
+        public readonly ?ValueSetter $setter = null,
     ) {
-        $this->propertyName = $this->property->getName();
-        $this->fieldName = $fieldName ?? $this->propertyName;
+        if (!$this->getter && !$this->setter) {
+            throw new LogicException('Cannot build field without either getter or setter!');
+        }
     }
 
-    public static function fromAttributes(ReflectionProperty $property, DocumentMetadataFactory $metadataFactory): ?self
+    public function getPHPValue(object $document): mixed
     {
-        $attributes = $property->getAttributes(FieldAttribute::class);
-        if (! $attributes) {
-            return null;
-        }
-
-        $attribute = $attributes[0]->newInstance();
-
-        $codec = null;
-
-        if ($attribute->codec === null) {
-            // Try to guess codec by type
-            $type = $property->getType();
-            if ($type instanceof ReflectionNamedType && $metadataFactory->isMappedDocument($type->getName())) {
-                $codec = new MappedDocumentCodec($metadataFactory->getMetadata($type->getName()));
-            }
-        }
-
-        return new self(
-            $property,
-            $attribute->name,
-            $codec ?? $attribute->codec,
-        );
+        return $this->getter?->__invoke($document);
     }
 
-    public function existsInBson(BSONDocument $bson): bool
+    public function readFromBSON(BSONDocument $bson, object $document): void
     {
-        return $bson->has($this->fieldName);
-    }
-
-    public function readFromBson(BSONDocument $bson): mixed
-    {
-        if (! $this->existsInBson($bson)) {
-            return null;
+        if (! $this->setter) {
+            return;
         }
 
-        $bsonValue = $bson->get($this->fieldName);
+        if (! isset($bson->{$this->name})) {
+            return;
+        }
 
+        $bsonValue = $bson->{$this->name};
+        if ($bsonValue === null) {
+            return;
+        }
+
+        $this->setPHPValue($document, $this->decodeBSONValue($bsonValue));
+    }
+
+    public function setPHPValue(object $document, mixed $value): void
+    {
+        $this->setter?->__invoke($document, $value);
+    }
+
+    public function writeToBSON(array &$bson, object $document): void
+    {
+        if (! $this->getter) {
+            return;
+        }
+
+        $bsonValue = $this->encodePHPValue($this->getPHPValue($document));
+        if ($bsonValue === null) {
+            return;
+        }
+
+        $bson[$this->name] = $bsonValue;
+    }
+
+    private function decodeBSONValue(mixed $value): mixed
+    {
         return $this->codec
-            ? $this->codec->decode($bsonValue)
-            : $bsonValue;
+            ? $this->codec->decode($value)
+            : $value;
     }
 
-    public function writeToBson(array &$bson, mixed $value): void
+    private function encodePHPValue(mixed $value): mixed
     {
-        $bsonValue = $this->codec
+        return $this->codec
             ? $this->codec->encode($value)
             : $value;
-
-        if ($bsonValue !== null) {
-            $bson[$this->fieldName] = $bsonValue;
-        }
-    }
-
-    public function readFromObject(object $object): mixed
-    {
-        return $this->property->getValue($object);
-    }
-
-    public function writeToObject(object $object, mixed $value): void
-    {
-        $this->property->setValue($object, $value);
     }
 }
