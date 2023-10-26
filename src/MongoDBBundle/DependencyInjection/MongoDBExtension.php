@@ -21,7 +21,7 @@ class MongoDBExtension extends Extension
         return 'mongodb';
     }
 
-    public function load(array $configs, ContainerBuilder $container)
+    public function load(array $configs, ContainerBuilder $container): void
     {
         $loader = new XmlFileLoader($container, new FileLocator(dirname(__DIR__) . '/Resources/config'));
         $loader->load('services.xml');
@@ -55,10 +55,7 @@ class MongoDBExtension extends Extension
         if (count($clients) === 1) {
             $clientId = array_key_first($clients);
 
-            $container->setDefinition(
-                Client::class,
-                $container->getDefinition(self::getClientServiceName($clientId)),
-            );
+            $container->setAlias(Client::class, self::getClientServiceName($clientId));
         }
 
         // Remove the prototype definition as it's tagged as client
