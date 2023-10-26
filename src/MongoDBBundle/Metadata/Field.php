@@ -11,13 +11,15 @@ use ReflectionProperty;
 
 final class Field
 {
-    public readonly ?string $fieldName;
+    public readonly string $propertyName;
+    public readonly string $fieldName;
 
     public function __construct(
-        public readonly string $propertyName,
+        private readonly ReflectionProperty $property,
         ?string $fieldName = null,
-        public readonly ?Codec $codec = null,
+        private readonly ?Codec $codec = null,
     ) {
+        $this->propertyName = $this->property->getName();
         $this->fieldName = $fieldName ?? $this->propertyName;
     }
 
@@ -41,7 +43,7 @@ final class Field
         }
 
         return new self(
-            $property->getName(),
+            $property,
             $attribute->name,
             $codec ?? $attribute->codec,
         );
@@ -63,5 +65,26 @@ final class Field
         return $this->codec
             ? $this->codec->decode($bsonValue)
             : $bsonValue;
+    }
+
+    public function writeToBson(array &$bson, mixed $value): void
+    {
+        $bsonValue = $this->codec
+            ? $this->codec->encode($value)
+            : $value;
+
+        if ($bsonValue !== null) {
+            $bson[$this->fieldName] = $bsonValue;
+        }
+    }
+
+    public function readFromObject(object $object): mixed
+    {
+        return $this->property->getValue($object);
+    }
+
+    public function writeToObject(object $object, mixed $value): void
+    {
+        $this->property->setValue($object, $value);
     }
 }

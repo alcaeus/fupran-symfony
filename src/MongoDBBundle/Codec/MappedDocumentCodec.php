@@ -4,7 +4,6 @@ namespace MongoDB\Bundle\Codec;
 
 use MongoDB\BSON\Document;
 use MongoDB\Bundle\Metadata\Document as DocumentMetadata;
-use MongoDB\Codec\Codec;
 use MongoDB\Codec\DecodeIfSupported;
 use MongoDB\Codec\DocumentCodec;
 use MongoDB\Codec\EncodeIfSupported;
@@ -48,8 +47,7 @@ class MappedDocumentCodec implements DocumentCodec
             }
 
             $decodedValue = $fieldMapping->readFromBson($value);
-
-            $this->reflection->getProperty($fieldMapping->propertyName)->setValue($object, $decodedValue);
+            $fieldMapping->writeToObject($object, $decodedValue);
         }
 
         return $object;
@@ -64,18 +62,12 @@ class MappedDocumentCodec implements DocumentCodec
         $data = [];
 
         foreach ($this->metadata->fieldMappings as $fieldMapping) {
-            $propertyValue = $this->reflection->getProperty($fieldMapping->propertyName)->getValue($value);
+            $propertyValue = $fieldMapping->readFromObject($value);
             if ($propertyValue === null) {
                 continue;
             }
 
-            $encodedValue = $fieldMapping->codec
-                ? $fieldMapping->codec->encode($propertyValue)
-                : $propertyValue;
-
-            if ($encodedValue !== null) {
-                $data[$fieldMapping->propertyName] = $encodedValue;
-            }
+            $fieldMapping->writeToBson($data, $propertyValue);
         }
 
         return Document::fromPHP($data);
