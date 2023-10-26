@@ -9,6 +9,7 @@ use MongoDB\Codec\DecodeIfSupported;
 use MongoDB\Codec\EncodeIfSupported;
 use MongoDB\Exception\UnsupportedValueException;
 
+/** @template-implements Codec<Document, Point> */
 class PointCodec implements Codec
 {
     use DecodeIfSupported;

@@ -11,6 +11,9 @@ use MongoDB\Exception\UnsupportedValueException;
 use function array_is_list;
 use function array_map;
 
+/**
+ * @template-implements Codec<PackedArray, array>
+ */
 class ArrayCodec implements Codec
 {
     use DecodeIfSupported;
