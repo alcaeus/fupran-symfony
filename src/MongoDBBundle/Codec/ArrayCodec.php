@@ -27,7 +27,7 @@ class ArrayCodec implements Codec
 
     public function canEncode($value): bool
     {
-        return array_is_list($value);
+        return is_array($value) && array_is_list($value);
     }
 
     public function decode($value)
