@@ -2,6 +2,7 @@
 
 namespace MongoDB\Bundle\DependencyInjection;
 
+use MongoDB\Client;
 use MongoDB\Collection;
 use MongoDB\Database;
 use Symfony\Component\Config\FileLocator;
@@ -10,6 +11,7 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 
+use function array_key_first;
 use function sprintf;
 
 class MongoDBExtension extends Extension
@@ -47,6 +49,16 @@ class MongoDBExtension extends Extension
             $clientDefinition->setArgument('$driverOptions', $clientConfiguration['driverOptions'] ?? []);
 
             $container->setDefinition(self::getClientServiceName($clientId), $clientDefinition);
+        }
+
+        // Register an autowiring alias if there is only one client
+        if (count($clients) === 1) {
+            $clientId = array_key_first($clients);
+
+            $container->setDefinition(
+                Client::class,
+                $container->getDefinition(self::getClientServiceName($clientId)),
+            );
         }
 
         // Remove the prototype definition as it's tagged as client
