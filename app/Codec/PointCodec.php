@@ -4,6 +4,7 @@ namespace App\Codec;
 
 use GeoJson\Geometry\Point;
 use MongoDB\BSON\Document;
+use MongoDB\BSON\PackedArray;
 use MongoDB\Codec\Codec;
 use MongoDB\Codec\DecodeIfSupported;
 use MongoDB\Codec\EncodeIfSupported;
@@ -17,7 +18,11 @@ class PointCodec implements Codec
 
     public function canDecode($value): bool
     {
-        return $value instanceof Document;
+        return $value instanceof Document
+            && isset($value->type)
+            && $value->type === 'Point'
+            && isset($value->coordinates)
+            && $value->coordinates instanceof PackedArray;
     }
 
     public function canEncode($value): bool
