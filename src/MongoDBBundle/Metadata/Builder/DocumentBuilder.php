@@ -8,6 +8,7 @@ use MongoDB\Bundle\Metadata\Document;
 use MongoDB\Bundle\Metadata\Field;
 use Closure;
 use LogicException;
+use MongoDB\Bundle\Metadata\CodecGuesser;
 use ReflectionClass;
 
 use function array_keys;
@@ -45,6 +46,7 @@ final class DocumentBuilder implements MetadataBuilder
 
     public static function fromAttributes(
         string $className,
+        ?CodecGuesser $codecGuesser = null,
     ): self {
         $reflectionClass = new ReflectionClass($className);
         $documentAttributes = $reflectionClass->getAttributes(DocumentAttribute::class);
@@ -74,7 +76,7 @@ final class DocumentBuilder implements MetadataBuilder
                 ));
             }
 
-            $field = FieldBuilder::fromAttribute($propertyOrMethod, $fieldAttributes[0]->newInstance())->build();
+            $field = FieldBuilder::fromAttribute($propertyOrMethod, $fieldAttributes[0]->newInstance(), $codecGuesser)->build();
 
             if ($field->name === '_id') {
                 $id = $field;

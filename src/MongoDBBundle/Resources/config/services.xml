@@ -22,7 +22,11 @@
             <tag name="mongodb.client" />
         </service>
 
-        <service id="mongodb.metadata.document_metadata_factory" class="MongoDB\Bundle\Metadata\DocumentMetadataFactory" />
+        <service id="mongodb.metadata.codec_guesser" class="MongoDB\Bundle\Metadata\CodecGuesser" />
+
+        <service id="mongodb.metadata.document_metadata_factory" class="MongoDB\Bundle\Metadata\DocumentMetadataFactory">
+            <argument key="$codecGuesser" type="service" id="mongodb.metadata.codec_guesser" />
+        </service>
 
         <service id="mongodb.codec.mapped_document_codec_factory" class="MongoDB\Bundle\Codec\MappedDocumentCodecFactory">
             <argument key="$metadataFactory" type="service" id="mongodb.metadata.document_metadata_factory" />

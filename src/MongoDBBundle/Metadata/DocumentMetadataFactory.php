@@ -10,6 +10,10 @@ class DocumentMetadataFactory
     /** @var array<string,Document> */
     private array $metadata;
 
+    public function __construct(
+        private readonly CodecGuesser $codecGuesser,
+    ) {}
+
     public function getMetadata(string $className): Document
     {
         return $this->metadata[$className] ??= $this->loadMetadata($className);
@@ -29,6 +33,6 @@ class DocumentMetadataFactory
     private function loadMetadata(string $className): Document
     {
         // TODO: Create different readers
-        return DocumentBuilder::fromAttributes($className)->build();
+        return DocumentBuilder::fromAttributes($className, $this->codecGuesser)->build();
     }
 }

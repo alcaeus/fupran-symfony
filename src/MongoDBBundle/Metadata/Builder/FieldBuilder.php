@@ -4,6 +4,7 @@ namespace MongoDB\Bundle\Metadata\Builder;
 
 use MongoDB\Bundle\Attribute\Field as FieldAttribute;
 use MongoDB\Bundle\Metadata\Field;
+use MongoDB\Bundle\Metadata\CodecGuesser;
 use MongoDB\Bundle\ValueAccessor\MethodAccessor;
 use MongoDB\Bundle\ValueAccessor\ReflectionAccessor;
 use MongoDB\Bundle\ValueAccessor\ValueGetter;
@@ -37,8 +38,11 @@ final class FieldBuilder implements MetadataBuilder
         ));
     }
 
-    public static function fromAttribute(Reflectionmethod|ReflectionProperty $propertyOrMethod, FieldAttribute $attribute): self
-    {
+    public static function fromAttribute(
+        Reflectionmethod|ReflectionProperty $propertyOrMethod,
+        FieldAttribute $attribute,
+        ?CodecGuesser $codecGuesser = null,
+    ): self {
         $builder = $propertyOrMethod instanceof ReflectionProperty
             ? self::fromReflectionProperty($propertyOrMethod)
             : self::fromReflectionMethod($propertyOrMethod);
@@ -47,8 +51,9 @@ final class FieldBuilder implements MetadataBuilder
             $builder = $builder->withName($attribute->name);
         }
 
-        if ($attribute->codec) {
-            $builder = $builder->withCodec($attribute->codec);
+        $codec = $attribute->codec ?? self::guessCodec($codecGuesser, $propertyOrMethod);
+        if ($codec) {
+            $builder = $builder->withCodec($codec);
         }
 
         return $builder;
@@ -105,5 +110,22 @@ final class FieldBuilder implements MetadataBuilder
         );
 
         return $this;
+    }
+
+    private static function guessCodec(?CodecGuesser $codecGuesser, ReflectionMethod|ReflectionProperty $propertyOrMethod): ?Codec
+    {
+        if (! $codecGuesser) {
+            return null;
+        }
+
+        $type = $propertyOrMethod instanceof ReflectionProperty
+            ? $propertyOrMethod->getType()
+            : $propertyOrMethod->getReturnType();
+
+        if ($type === null) {
+            return null;
+        }
+
+        return $codecGuesser->guessCodec($type);
     }
 }
