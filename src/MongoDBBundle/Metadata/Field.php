@@ -55,7 +55,12 @@ final class Field
             return;
         }
 
-        $bsonValue = $this->encodePHPValue($this->getPHPValue($document));
+        $phpValue = $this->getPHPValue($document);
+        if ($phpValue === null) {
+            return;
+        }
+
+        $bsonValue = $this->encodePHPValue($phpValue);
         if ($bsonValue === null) {
             return;
         }
