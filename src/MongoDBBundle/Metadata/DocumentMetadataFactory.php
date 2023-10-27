@@ -2,6 +2,7 @@
 
 namespace MongoDB\Bundle\Metadata;
 
+use MongoDB\Bundle\Metadata\Builder\DocumentBuilder;
 use Throwable;
 
 class DocumentMetadataFactory
@@ -28,6 +29,6 @@ class DocumentMetadataFactory
     private function loadMetadata(string $className): Document
     {
         // TODO: Create different readers
-        return Document::fromAttributes($className, $this);
+        return DocumentBuilder::fromAttributes($className)->build();
     }
 }

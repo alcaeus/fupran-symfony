@@ -4,7 +4,7 @@ namespace MongoDB\Bundle\Attribute;
 
 use MongoDB\Codec\Codec;
 
-#[\Attribute(\Attribute::TARGET_PROPERTY)]
+#[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::TARGET_METHOD)]
 class Field
 {
     public function __construct(

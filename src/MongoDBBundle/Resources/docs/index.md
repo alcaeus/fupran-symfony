@@ -206,6 +206,9 @@ The `Field` attribute takes an optional `name` option, which defaults to the pro
 name of the field in the database. Note that you have to use this name when querying the database, as mapping
 information is not used when sending queries to the database.
 
+You can also map methods as fields. In that case, the return value of the method will be stored in the database, but it
+won't be used when loading data from the database. This can be helpful to cache data used in queries.
+
 Embedded documents are mapped as fields. The `Field` mapping will automatically detect embedded documents based on the
 property type and use the appropriate codec:
 

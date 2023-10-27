@@ -2,12 +2,14 @@
 
 namespace MongoDB\Bundle\Metadata\Builder;
 
+use MongoDB\Bundle\Attribute\Field as FieldAttribute;
 use MongoDB\Bundle\Metadata\Field;
 use MongoDB\Bundle\ValueAccessor\MethodAccessor;
 use MongoDB\Bundle\ValueAccessor\ReflectionAccessor;
 use MongoDB\Bundle\ValueAccessor\ValueGetter;
 use MongoDB\Bundle\ValueAccessor\ValueSetter;
 use MongoDB\Codec\Codec;
+use ReflectionAttribute;
 use ReflectionMethod;
 use ReflectionProperty;
 
@@ -33,6 +35,23 @@ final class FieldBuilder implements MetadataBuilder
             MethodAccessor::createGetter($method),
             null,
         ));
+    }
+
+    public static function fromAttribute(Reflectionmethod|ReflectionProperty $propertyOrMethod, FieldAttribute $attribute): self
+    {
+        $builder = $propertyOrMethod instanceof ReflectionProperty
+            ? self::fromReflectionProperty($propertyOrMethod)
+            : self::fromReflectionMethod($propertyOrMethod);
+
+        if ($attribute->name !== null) {
+            $builder = $builder->withName($attribute->name);
+        }
+
+        if ($attribute->codec) {
+            $builder = $builder->withCodec($attribute->codec);
+        }
+
+        return $builder;
     }
 
     public function build(): Field

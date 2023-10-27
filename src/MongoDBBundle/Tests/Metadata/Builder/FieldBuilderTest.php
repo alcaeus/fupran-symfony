@@ -2,6 +2,7 @@
 
 namespace MongoDB\Bundle\Tests\Metadata\Builder;
 
+use MongoDB\Bundle\Attribute\Field as FieldAttribute;
 use MongoDB\Bundle\Codec\DateTimeImmutableCodec;
 use MongoDB\Bundle\Metadata\Builder\FieldBuilder;
 use MongoDB\Bundle\Metadata\Field;
@@ -15,9 +16,24 @@ use ReflectionProperty;
 /** @covers \MongoDB\Bundle\Metadata\Builder\FieldBuilder */
 final class FieldBuilderTest extends TestCase
 {
+    public function testFromAttributeForMethod(): void
+    {
+        $reflectionMethod = new ReflectionMethod(SimpleTestDocument::class, 'getSquare');
+
+        $builder = FieldBuilder::fromAttribute($reflectionMethod, new FieldAttribute(name: 'square'));
+
+        $field = $builder->build();
+
+        $this->assertInstanceOf(Field::class, $field);
+        $this->assertSame('square', $field->name);
+        $this->assertNull($field->codec);
+        $this->assertNotNull($field->getter);
+        $this->assertNull($field->setter);
+    }
+
     public function testFromReflectionMethod(): void
     {
-        $document = new SimpleTestDocument();
+        $document = new SimpleTestDocument(5);
         $reflectionMethod = new ReflectionMethod($document, 'getSquare');
 
         $builder = FieldBuilder::fromReflectionMethod($reflectionMethod);
@@ -34,6 +50,37 @@ final class FieldBuilderTest extends TestCase
         $this->assertSame(36, $field->getPHPValue($document));
     }
 
+    public function testFromAttributeForProperty(): void
+    {
+        $reflectionProperty = new ReflectionProperty(SimpleTestDocument::class, 'value');
+
+        $builder = FieldBuilder::fromAttribute($reflectionProperty, new FieldAttribute());
+
+        $field = $builder->build();
+
+        $this->assertInstanceOf(Field::class, $field);
+        $this->assertSame('value', $field->name);
+        $this->assertNull($field->codec);
+        $this->assertNotNull($field->getter);
+        $this->assertNotNull($field->setter);
+    }
+
+    public function testFromAttributeWithNameAndCodec(): void
+    {
+        $reflectionProperty = new ReflectionProperty(SimpleTestDocument::class, 'value');
+
+        $codec = new DateTimeImmutableCodec();
+        $builder = FieldBuilder::fromAttribute($reflectionProperty, new FieldAttribute(name: 'baz', codec: $codec));
+
+        $field = $builder->build();
+
+        $this->assertInstanceOf(Field::class, $field);
+        $this->assertSame('baz', $field->name);
+        $this->assertSame($codec, $field->codec);
+        $this->assertNotNull($field->getter);
+        $this->assertNotNull($field->setter);
+    }
+
     public function testFromReflectionProperty(): void
     {
         $field = self::createTestBuilder()->build();
@@ -44,7 +91,7 @@ final class FieldBuilderTest extends TestCase
         $this->assertNotNull($field->getter);
         $this->assertNotNull($field->setter);
 
-        $document = new SimpleTestDocument();
+        $document = new SimpleTestDocument(5);
         $field->setPHPValue($document, 6);
         $this->assertSame(6, $field->getPHPValue($document));
         $this->assertSame(36, $document->getSquare());
@@ -110,7 +157,7 @@ final class FieldBuilderTest extends TestCase
 
     private static function createTestBuilder(): FieldBuilder
     {
-        $document = new SimpleTestDocument();
+        $document = new SimpleTestDocument(5);
         $reflectionProperty = new ReflectionProperty($document, 'value');
 
         return FieldBuilder::fromReflectionProperty($reflectionProperty);

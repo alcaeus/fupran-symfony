@@ -31,6 +31,18 @@ final class DocumentBuilderTest extends TestCase
         $this->assertSame('square', $metadata->fields[1]->name);
     }
 
+    public function testFromAttributes(): void
+    {
+        $metadata = DocumentBuilder::fromAttributes(SimpleTestDocument::class)->build();
+
+        $this->assertSame(SimpleTestDocument::class, $metadata->className);
+        $this->assertCount(2, $metadata->fields);
+
+        $this->assertNotNull($metadata->id);
+        $this->assertSame('value', $metadata->fields[0]->name);
+        $this->assertSame('square', $metadata->fields[1]->name);
+    }
+
     public function testFromReflectionClassWithoutIdentifier(): void
     {
         $document = self::createDocumentBuilder(null)->build();

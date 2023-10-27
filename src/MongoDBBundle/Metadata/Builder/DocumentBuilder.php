@@ -2,6 +2,8 @@
 
 namespace MongoDB\Bundle\Metadata\Builder;
 
+use MongoDB\Bundle\Attribute\Document as DocumentAttribute;
+use MongoDB\Bundle\Attribute\Field as FieldAttribute;
 use MongoDB\Bundle\Metadata\Document;
 use MongoDB\Bundle\Metadata\Field;
 use Closure;
@@ -38,6 +40,53 @@ final class DocumentBuilder implements MetadataBuilder
             $reflectionClass->name,
             $id,
             ...self::createFields($reflectionClass, $fields),
+        ));
+    }
+
+    public static function fromAttributes(
+        string $className,
+    ): self {
+        $reflectionClass = new ReflectionClass($className);
+        $documentAttributes = $reflectionClass->getAttributes(DocumentAttribute::class);
+        if (! $documentAttributes) {
+            throw new LogicException(sprintf('Class "%s" is not a document.', $className));
+        }
+
+        // Get fields from properties and methods
+        $fields = [];
+        $id = null;
+
+        $propertiesAndMethods = array_merge(
+            $reflectionClass->getProperties(),
+            $reflectionClass->getMethods(),
+        );
+
+        foreach ($propertiesAndMethods as $propertyOrMethod) {
+            $fieldAttributes = $propertyOrMethod->getAttributes(FieldAttribute::class);
+            if ($fieldAttributes === []) {
+                continue;
+            } elseif (count($fieldAttributes) > 1) {
+                // Can only have a single field attribute per property or method
+                throw new LogicException(sprintf(
+                    'Class "%s" has multiple field attributes on "%s".',
+                    $reflectionClass->name,
+                    $propertyOrMethod->name,
+                ));
+            }
+
+            $field = FieldBuilder::fromAttribute($propertyOrMethod, $fieldAttributes[0]->newInstance())->build();
+
+            if ($field->name === '_id') {
+                $id = $field;
+            } else {
+                $fields[] = $field;
+            }
+        }
+
+        return new self(new Document(
+            $reflectionClass->name,
+            $id,
+            ...$fields,
         ));
     }
 

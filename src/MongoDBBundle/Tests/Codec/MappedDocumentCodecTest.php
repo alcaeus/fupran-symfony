@@ -2,15 +2,19 @@
 
 namespace MongoDB\Bundle\Tests\Codec;
 
+use Generator;
 use MongoDB\BSON\Document;
 use MongoDB\Bundle\Codec\MappedDocumentCodec;
+use MongoDB\Bundle\Metadata\Builder\DocumentBuilder;
+use MongoDB\Bundle\Metadata\Document as DocumentMetadata;
 use MongoDB\Bundle\Tests\Fixtures\SimpleTestDocument;
 use PHPUnit\Framework\TestCase;
 
 /** @covers \MongoDB\Bundle\Codec\MappedDocumentCodec */
 final class MappedDocumentCodecTest extends TestCase
 {
-    public function testDecode(): void
+    /** @dataProvider provideMetadata */
+    public function testDecode(DocumentMetadata $metadata): void
     {
         $expected = new SimpleTestDocument(5);
         $bsonDocument = Document::fromPHP([
@@ -20,7 +24,7 @@ final class MappedDocumentCodecTest extends TestCase
             'unused' => 'foo',
         ]);
 
-        $codec = $this->createCodec();
+        $codec = $this->createCodec($metadata);
         $this->assertTrue($codec->canDecode($bsonDocument));
 
         $decoded = $codec->decode($bsonDocument);
@@ -28,11 +32,12 @@ final class MappedDocumentCodecTest extends TestCase
         $this->assertEquals($expected, $decoded);
     }
 
-    public function testEncode(): void
+    /** @dataProvider provideMetadata */
+    public function testEncode(DocumentMetadata $metadata): void
     {
         $document = new SimpleTestDocument(5);
 
-        $codec = $this->createCodec();
+        $codec = $this->createCodec($metadata);
         $this->assertTrue($codec->canEncode($document));
 
         $encoded = $codec->encode($document);
@@ -47,8 +52,19 @@ final class MappedDocumentCodecTest extends TestCase
         );
     }
 
-    private function createCodec(): MappedDocumentCodec
+    public static function provideMetadata(): Generator
     {
-        return new MappedDocumentCodec(SimpleTestDocument::getMetadata());
+        yield 'fromReflection' => [
+            SimpleTestDocument::getMetadata(),
+        ];
+
+        yield 'fromAttributes' => [
+            DocumentBuilder::fromAttributes(SimpleTestDocument::class)->build(),
+        ];
+    }
+
+    private function createCodec(DocumentMetadata $metadata): MappedDocumentCodec
+    {
+        return new MappedDocumentCodec($metadata);
     }
 }
