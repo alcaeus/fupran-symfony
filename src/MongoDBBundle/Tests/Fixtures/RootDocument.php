@@ -33,4 +33,13 @@ class RootDocument
 
     #[Field]
     public EmbeddedDocument $embeddedDocument;
+
+    #[Field]
+    public UnbackedEnum $unbackedEnum;
+
+    #[Field]
+    public StringBackedEnum $stringBackedEnum;
+
+    #[Field]
+    public IntBackedEnum $intBackedEnum;
 }

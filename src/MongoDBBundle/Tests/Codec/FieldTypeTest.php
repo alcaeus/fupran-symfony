@@ -9,7 +9,10 @@ use MongoDB\Bundle\Codec\MappedDocumentCodec;
 use MongoDB\Bundle\Metadata\Builder\DocumentBuilder;
 use MongoDB\Bundle\Metadata\CodecGuesser;
 use MongoDB\Bundle\Tests\Fixtures\EmbeddedDocument;
+use MongoDB\Bundle\Tests\Fixtures\IntBackedEnum;
 use MongoDB\Bundle\Tests\Fixtures\RootDocument;
+use MongoDB\Bundle\Tests\Fixtures\StringBackedEnum;
+use MongoDB\Bundle\Tests\Fixtures\UnbackedEnum;
 use PHPUnit\Framework\TestCase;
 
 /** @coversNothing */
@@ -76,6 +79,24 @@ class FieldTypeTest extends TestCase
             'fieldName' => 'embeddedDocument',
             'value' => new EmbeddedDocument('bar'),
             'encodedValue' => Document::fromPHP(['foo' => 'bar']),
+        ];
+
+        yield 'unbacked enum' => [
+            'fieldName' => 'unbackedEnum',
+            'value' => UnbackedEnum::BAR,
+            'encodedValue' => 'BAR',
+        ];
+
+        yield 'string backed enum' => [
+            'fieldName' => 'stringBackedEnum',
+            'value' => StringBackedEnum::BAR,
+            'encodedValue' => 'bar',
+        ];
+
+        yield 'int backed enum' => [
+            'fieldName' => 'intBackedEnum',
+            'value' => IntBackedEnum::BAR,
+            'encodedValue' => 2,
         ];
     }
 }
