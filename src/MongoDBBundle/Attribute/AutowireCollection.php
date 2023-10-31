@@ -17,7 +17,7 @@ class AutowireCollection extends AutowireCallable
     public function __construct(
         string $clientId,
         private string $databaseName,
-        private string $collectionName,
+        private ?string $collectionName,
         private ?string $documentClass = null,
         private array $options = [],
         bool|string $lazy = false,
@@ -46,7 +46,7 @@ class AutowireCollection extends AutowireCallable
 
         return (new Definition($type = \is_string($this->lazy) ? $this->lazy : ($type ?: Collection::class)))
             ->setFactory($value)
-            ->setArguments([$this->databaseName, $this->collectionName, $options])
+            ->setArguments([$this->databaseName, $this->collectionName ?? $parameter->getName(), $options])
             ->setLazy($this->lazy);
     }
 }
