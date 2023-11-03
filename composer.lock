@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "64d8664399135f585d6aa2dd7cd0d245",
+    "content-hash": "5a315fe9a4242395cdd2841a976b503e",
     "packages": [
         {
             "name": "jean85/pretty-package-versions",
@@ -64,6 +64,74 @@
                 "source": "https://github.com/Jean85/pretty-package-versions/tree/2.0.5"
             },
             "time": "2021-10-08T21:21:46+00:00"
+        },
+        {
+            "name": "mongodb/builder",
+            "version": "0.1.x-dev",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/mongodb/mongo-php-builder.git",
+                "reference": "48353b44f72cd175df78ff0035614ca5235ff129"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/mongodb/mongo-php-builder/zipball/48353b44f72cd175df78ff0035614ca5235ff129",
+                "reference": "48353b44f72cd175df78ff0035614ca5235ff129",
+                "shasum": ""
+            },
+            "require": {
+                "ext-mongodb": "^1.17.0",
+                "mongodb/mongodb": "^1.17.0@dev",
+                "php": ">=8.1"
+            },
+            "require-dev": {
+                "doctrine/coding-standard": "^11.1",
+                "rector/rector": "^0.16.0",
+                "squizlabs/php_codesniffer": "^3.7",
+                "symfony/phpunit-bridge": "^5.2",
+                "vimeo/psalm": "^5.13"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/functions.php"
+                ],
+                "psr-4": {
+                    "MongoDB\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Andreas Braun",
+                    "email": "andreas.braun@mongodb.com"
+                },
+                {
+                    "name": "Jeremy Mikola",
+                    "email": "jmikola@gmail.com"
+                },
+                {
+                    "name": "Jérôme Tamarelle",
+                    "email": "jerome.tamarelle@mongodb.com"
+                }
+            ],
+            "description": "Query and Aggregation Builder for MongoDB",
+            "homepage": "https://jira.mongodb.org/browse/PHPLIB",
+            "keywords": [
+                "database",
+                "driver",
+                "mongodb",
+                "persistence"
+            ],
+            "support": {
+                "issues": "https://github.com/mongodb/mongo-php-builder/issues",
+                "source": "https://github.com/mongodb/mongo-php-builder/tree/0.1"
+            },
+            "time": "2023-11-20T19:48:06+00:00"
         },
         {
             "name": "mongodb/mongodb",
@@ -2938,7 +3006,9 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": [],
+    "stability-flags": {
+        "mongodb/builder": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
