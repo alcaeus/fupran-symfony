@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Pipeline\AddPreviousPrice;
+use MongoDB\Builder\BuilderEncoder;
 use MongoDB\Bundle\Attribute\AutowireCollection;
 use MongoDB\Collection;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -23,6 +24,7 @@ class AddPreviousPriceCommand extends Command
         #[AutowireCollection]
         private readonly Collection $priceReports,
         private readonly AddPreviousPrice $pipeline,
+        private readonly BuilderEncoder $encoder,
     ) {
         parent::__construct();
     }
@@ -34,7 +36,7 @@ class AddPreviousPriceCommand extends Command
         $io->text('Adding previous price data');
 
         $startTime = microtime(true);
-        $this->priceReports->aggregate($this->pipeline->getPipeline());
+        $this->priceReports->aggregate($this->encoder->encode($this->pipeline->getPipeline()));
         $endTime = microtime(true);
 
         $io->success(sprintf('Done in %.5f seconds', $endTime - $startTime));

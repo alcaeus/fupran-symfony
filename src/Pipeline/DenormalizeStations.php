@@ -2,72 +2,65 @@
 
 namespace App\Pipeline;
 
+use MongoDB\Builder\Expression;
+use MongoDB\Builder\Stage;
+use MongoDB\Builder\Type\StageInterface;
+
 final class DenormalizeStations implements Pipeline
 {
-    /** @return array<object> */
-    public function getPipeline(): array
+    public function getPipeline(): \MongoDB\Builder\Pipeline
     {
-        return [
+        return new \MongoDB\Builder\Pipeline(
             $this->matchOnlyMissingStationRecords(),
-            $this->lookupStation(),
-            $this->extractFirstStation(),
+            $this->lookupSingleStation(),
             $this->mergeIntoPriceReports(),
-        ];
+        );
     }
 
-    private function matchOnlyMissingStationRecords(): object
+    private function matchOnlyMissingStationRecords(): StageInterface
     {
-        return (object) [
-            '$match' => [
-                'station._id' => ['$exists' => false],
-            ],
-        ];
+        return Stage::match(...['station' => ['$exists' => true]]);
     }
 
-    private function lookupStation(): object
+    private function lookupSingleStation(): \MongoDB\Builder\Pipeline
     {
-        return (object) [
-            '$lookup' => [
-                'from' => 'stations',
-                'localField' => 'station',
-                'foreignField' => '_id',
-                'as' => 'station',
-                'pipeline' => [$this->removeUnnecessaryStationFields()],
-            ],
-        ];
+        return new \MongoDB\Builder\Pipeline(
+            Stage::lookup(
+                as: 'station',
+                from: 'stations',
+                localField: 'station',
+                foreignField: '_id',
+                pipeline: new \MongoDB\Builder\Pipeline(
+                    $this->removeUnnecessaryStationFields(),
+                ),
+            ),
+            Stage::project(
+                _id: true,
+                station: Expression::arrayElemAt(
+                    Expression::arrayFieldPath('station'),
+                    0,
+                ),
+            ),
+        );
     }
 
-    private function removeUnnecessaryStationFields(): object
+    private function removeUnnecessaryStationFields(): StageInterface
     {
-        return (object) [
-            '$unset' => [
-                'address.street',
-                'address.houseNumber',
-                'address.city',
-                'location',
-            ],
-        ];
+        return Stage::unset(
+            'address.street',
+            'address.houseNumber',
+            'address.city',
+            'location',
+        );
     }
 
-    private function extractFirstStation(): object
+    private function mergeIntoPriceReports(): StageInterface
     {
-        return (object) [
-            '$project' => [
-                '_id' => true,
-                'station' => ['$first' => '$station'],
-            ],
-        ];
-    }
-
-    private function mergeIntoPriceReports(): object
-    {
-        return (object) [
-            '$merge' => [
-                'into' => 'priceReports',
-                'on' => '_id',
-                'whenMatched' => 'merge',
-                'whenNotMatched' => 'discard',
-            ],
-        ];
+        return Stage::merge(
+            into: 'priceReports',
+            on: '_id',
+            whenMatched: 'merge',
+            whenNotMatched: 'discard',
+        );
     }
 }
