@@ -2,7 +2,6 @@
 
 namespace App\Pipeline;
 
-use MongoDB\Builder\BuilderEncoder;
 use MongoDB\Builder\Expression;
 use MongoDB\Builder\Query;
 use MongoDB\Builder\Stage;
@@ -12,18 +11,15 @@ use function MongoDB\object;
 
 final class AddPreviousPrice implements Pipeline
 {
-    /** @return array<object> */
-    public function getPipeline(): array
+    public function getPipeline(): \MongoDB\Builder\Pipeline
     {
-        $pipeline = new \MongoDB\Builder\Pipeline(
+        return new \MongoDB\Builder\Pipeline(
             $this->matchOnlyMissingPreviousPriceRecords(),
             $this->lookupSinglePrice(),
             $this->addChangeFields(),
             $this->removeUnchangedFields(),
             $this->mergeIntoPriceReports(),
         );
-
-        return (new BuilderEncoder())->encode($pipeline);
     }
 
     private function matchOnlyMissingPreviousPriceRecords(): StageInterface

@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Pipeline\DenormalizeStations;
+use MongoDB\Builder\BuilderEncoder;
 use MongoDB\Collection;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -21,6 +22,7 @@ class DenormalizeStationsCommand extends Command
     public function __construct(
         private readonly Collection $priceReports,
         private readonly DenormalizeStations $pipeline,
+        private readonly BuilderEncoder $encoder,
     ) {
         parent::__construct();
     }
@@ -32,7 +34,7 @@ class DenormalizeStationsCommand extends Command
         $io->text('Denormalising station data');
 
         $startTime = microtime(true);
-        $this->priceReports->aggregate($this->pipeline->getPipeline());
+        $this->priceReports->aggregate($this->encoder->encode($this->pipeline->getPipeline()));
         $endTime = microtime(true);
 
         $io->success(sprintf('Done in %.5f seconds', $endTime - $startTime));

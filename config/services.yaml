@@ -40,3 +40,6 @@ services:
         class: MongoDB\Collection
         factory: ['@MongoDB\Database', 'selectCollection']
         arguments: ['priceReports']
+
+    MongoDB\Builder\BuilderEncoder:
+        class: MongoDB\Builder\BuilderEncoder
