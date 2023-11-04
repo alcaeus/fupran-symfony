@@ -135,8 +135,30 @@ use MongoDB\Collection;
 class MyService
 {
     public function __construct(
-        #[AutowireCollection('myCluster', 'myDatabase', 'myCollection')]
+        #[AutowireCollection(
+            clientId: 'myCluster',
+            databaseName: 'myDatabase',
+            collectionName: 'myCollection'
+        )]
         private Collection $collection,
+    ) {}
+}
+```
+
+You can also omit the `collectionName` option if the property name matches the collection name:
+
+```php
+use MongoDB\Bundle\Attribute\AutowireCollection;
+use MongoDB\Collection;
+
+class MyService
+{
+    public function __construct(
+        #[AutowireCollection(
+            clientId: 'myCluster',
+            databaseName: 'myDatabase',
+        )]
+        private Collection $myCollection,
     ) {}
 }
 ```
@@ -160,10 +182,9 @@ class MyService
         #[AutowireCollection(
             clientId: 'myCluster',
             databaseName: 'myDatabase',
-            collectionName: 'myCollection',
             options: ['codec' => new MyDocumentCodec()],
         )]
-        private Collection $collection,
+        private Collection $myCollection,
     ) {}
 }
 ```

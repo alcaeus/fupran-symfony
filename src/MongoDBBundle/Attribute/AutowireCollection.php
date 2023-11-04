@@ -17,7 +17,7 @@ class AutowireCollection extends AutowireCallable
     public function __construct(
         string $clientId,
         private string $databaseName,
-        private ?string $collectionName,
+        private ?string $collectionName = null,
         private ?string $documentClass = null,
         private array $options = [],
         bool|string $lazy = false,
