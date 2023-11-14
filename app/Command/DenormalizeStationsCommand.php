@@ -23,7 +23,6 @@ class DenormalizeStationsCommand extends Command
         #[AutowireCollection(
             clientId: 'default',
             databaseName: '%databaseName%',
-            collectionName: 'priceReports'
         )]
         private readonly Collection $priceReports,
         private readonly DenormalizeStations $pipeline,

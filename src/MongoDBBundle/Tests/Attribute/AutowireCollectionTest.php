@@ -51,4 +51,30 @@ final class AutowireCollectionTest extends TestCase
         $this->assertSame('test', $definition->getArgument(1));
         $this->assertEquals(['foo' => 'bar'], $definition->getArgument(2));
     }
+
+    public function testWithoutCollection(): void
+    {
+        $autowire = new AutowireCollection(
+            clientId: 'default',
+            databaseName: 'mydb',
+            options: ['foo' => 'bar'],
+        );
+
+        $this->assertEquals([new Reference('mongodb.client.default'), 'selectCollection'], $autowire->value);
+
+        $definition = $autowire->buildDefinition(
+            value: $autowire->value,
+            type: Collection::class,
+            parameter: new \ReflectionParameter(
+                function (Collection $priceReports) {},
+                'priceReports',
+            ),
+        );
+
+        $this->assertSame(Collection::class, $definition->getClass());
+        $this->assertEquals($autowire->value, $definition->getFactory());
+        $this->assertSame('mydb', $definition->getArgument(0));
+        $this->assertSame('priceReports', $definition->getArgument(1));
+        $this->assertEquals(['foo' => 'bar'], $definition->getArgument(2));
+    }
 }

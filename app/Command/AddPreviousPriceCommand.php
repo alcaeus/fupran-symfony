@@ -23,7 +23,6 @@ class AddPreviousPriceCommand extends Command
         #[AutowireCollection(
             clientId: 'default',
             databaseName: '%databaseName%',
-            collectionName: 'priceReports'
         )]
         private readonly Collection $priceReports,
         private readonly AddPreviousPrice $pipeline,

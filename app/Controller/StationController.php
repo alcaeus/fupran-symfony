@@ -19,16 +19,15 @@ class StationController extends AbstractController
         #[AutowireCollection(
             clientId: 'default',
             databaseName: '%databaseName%',
-            collectionName: 'stations',
             documentClass: Station::class,
         )]
-        private readonly Collection $collection,
+        private readonly Collection $stations,
     ) {}
 
     #[Route('/stations', name: 'app_stations')]
     public function index(): JsonResponse
     {
-        $stations = $this->collection->find([], ['limit' => 10]);
+        $stations = $this->stations->find([], ['limit' => 10]);
 
         return $this->json(iterator_to_array($stations));
     }
@@ -36,7 +35,7 @@ class StationController extends AbstractController
     #[Route('/stations/{id}', name: 'app_stations_show')]
     public function show(string $id): JsonResponse
     {
-        $station = $this->collection->findOne(['_id' => new Binary(base64_decode($id), Binary::TYPE_UUID)]);
+        $station = $this->stations->findOne(['_id' => new Binary(base64_decode($id), Binary::TYPE_UUID)]);
 
         return $this->json($station);
     }

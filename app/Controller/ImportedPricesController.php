@@ -17,7 +17,6 @@ class ImportedPricesController extends AbstractController
         #[AutowireCollection(
             clientId: 'default',
             databaseName: '%databaseName%',
-            collectionName: 'priceReports',
             documentClass: ImportedPrice::class,
         )]
         private readonly Collection $collection,
