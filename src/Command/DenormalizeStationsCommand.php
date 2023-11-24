@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Pipeline\DenormalizeStations;
+use App\Aggregation\DenormalizeStations;
 use MongoDB\Builder\BuilderEncoder;
 use MongoDB\Bundle\Attribute\AutowireCollection;
 use MongoDB\Collection;

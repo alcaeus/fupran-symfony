@@ -1,19 +1,20 @@
 <?php
 
-namespace App\Pipeline;
+namespace App\Aggregation;
 
 use MongoDB\Builder\Expression;
+use MongoDB\Builder\Pipeline;
 use MongoDB\Builder\Query;
 use MongoDB\Builder\Stage;
 use MongoDB\Builder\Type\StageInterface;
 
 use function MongoDB\object;
 
-final class AddPreviousPrice implements Pipeline
+final class AddPreviousPrice implements Aggregation
 {
-    public function getPipeline(): \MongoDB\Builder\Pipeline
+    public function getPipeline(): Pipeline
     {
-        return new \MongoDB\Builder\Pipeline(
+        return new Pipeline(
             $this->matchOnlyMissingPreviousPriceRecords(),
             $this->lookupSinglePrice(),
             $this->addChangeFields(),
@@ -27,9 +28,9 @@ final class AddPreviousPrice implements Pipeline
         return Stage::match(...['previous._id' => ['$exists' => false]]);
     }
 
-    private function lookupSinglePrice(): \MongoDB\Builder\Pipeline
+    private function lookupSinglePrice(): Pipeline
     {
-        return new \MongoDB\Builder\Pipeline(
+        return new Pipeline(
             Stage::lookup(
                 as: 'previous',
                 from: 'priceReports',
@@ -39,7 +40,7 @@ final class AddPreviousPrice implements Pipeline
                     reportDate: Expression::dateFieldPath('reportDate'),
                     fuelType: Expression::stringFieldPath('fuelType'),
                 ),
-                pipeline: new \MongoDB\Builder\Pipeline(
+                pipeline: new Pipeline(
                     $this->onlyPreviousRecords(),
                     # TODO: Should be able to pass sort specification using variadic args
                     Stage::sort(object(reportDate: -1)),

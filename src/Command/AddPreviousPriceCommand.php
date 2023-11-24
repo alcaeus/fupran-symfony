@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Pipeline\AddPreviousPrice;
+use App\Aggregation\AddPreviousPrice;
 use MongoDB\Builder\BuilderEncoder;
 use MongoDB\Bundle\Attribute\AutowireCollection;
 use MongoDB\Collection;

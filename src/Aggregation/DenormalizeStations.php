@@ -1,16 +1,17 @@
 <?php
 
-namespace App\Pipeline;
+namespace App\Aggregation;
 
 use MongoDB\Builder\Expression;
+use MongoDB\Builder\Pipeline;
 use MongoDB\Builder\Stage;
 use MongoDB\Builder\Type\StageInterface;
 
-final class DenormalizeStations implements Pipeline
+final class DenormalizeStations implements Aggregation
 {
-    public function getPipeline(): \MongoDB\Builder\Pipeline
+    public function getPipeline(): Pipeline
     {
-        return new \MongoDB\Builder\Pipeline(
+        return new Pipeline(
             $this->matchOnlyMissingStationRecords(),
             $this->lookupSingleStation(),
             $this->mergeIntoPriceReports(),
@@ -22,15 +23,15 @@ final class DenormalizeStations implements Pipeline
         return Stage::match(...['station' => ['$exists' => true]]);
     }
 
-    private function lookupSingleStation(): \MongoDB\Builder\Pipeline
+    private function lookupSingleStation(): Pipeline
     {
-        return new \MongoDB\Builder\Pipeline(
+        return new Pipeline(
             Stage::lookup(
                 as: 'station',
                 from: 'stations',
                 localField: 'station',
                 foreignField: '_id',
-                pipeline: new \MongoDB\Builder\Pipeline(
+                pipeline: new Pipeline(
                     $this->removeUnnecessaryStationFields(),
                 ),
             ),
