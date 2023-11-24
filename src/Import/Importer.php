@@ -4,20 +4,25 @@ namespace App\Import;
 
 use DirectoryIterator;
 use MongoDB\BSON\Binary;
+use MongoDB\Bundle\Attribute\AutowireDatabase;
+use MongoDB\Database;
 use MongoDB\Driver\BulkWrite;
 use MongoDB\Driver\Manager;
 use Symfony\Component\Console\Output\OutputInterface;
 use function hex2bin;
-use function iterator_to_array;
 use function str_replace;
-use function usort;
 
 abstract class Importer
 {
+    private readonly Manager $manager;
+    protected string $databaseName;
+
     public function __construct(
-        private readonly Manager $manager,
-        protected readonly string $databaseName,
+        #[AutowireDatabase]
+        Database $database,
     ) {
+        $this->manager = $database->getManager();
+        $this->databaseName = $database->getDatabaseName();
     }
 
     abstract protected function storeDocument(BulkWrite $bulk, array $data): void;
