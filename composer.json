@@ -8,6 +8,7 @@
         "ext-ctype": "*",
         "ext-iconv": "*",
         "ext-mongodb": "^1.15",
+        "jmikola/geojson": "^1.1",
         "mongodb/builder": "^0.1@dev",
         "mongodb/mongodb": "^1.15",
         "mongodb/symfony-bundle": "^0.1.0",
@@ -15,7 +16,9 @@
         "symfony/dotenv": "6.4.*",
         "symfony/flex": "^2",
         "symfony/framework-bundle": "6.4.*",
+        "symfony/phpunit-bridge": "^6.3",
         "symfony/runtime": "6.4.*",
+        "symfony/uid": "6.4.*",
         "symfony/yaml": "6.4.*"
     },
     "require-dev": {
