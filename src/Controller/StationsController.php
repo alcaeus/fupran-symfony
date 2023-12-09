@@ -7,6 +7,7 @@ use MongoDB\Bundle\Attribute\AutowireCollection;
 use MongoDB\Collection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class StationsController extends AbstractController
@@ -17,12 +18,13 @@ class StationsController extends AbstractController
     ) {}
 
     #[Route('/stations', name: 'app_stations')]
-    public function index(): JsonResponse
+    public function index(): Response
     {
-        return $this->json(
-            $this->stations
-                ->find([], ['limit' => 10])
-                ->toArray(),
+        return $this->render(
+            'stations/index.html.twig',
+            [
+                'stations' => $this->stations->find([], ['limit' => 12])->toArray(),
+            ],
         );
     }
 }
