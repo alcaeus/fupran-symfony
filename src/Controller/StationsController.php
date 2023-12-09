@@ -23,7 +23,7 @@ class StationsController extends AbstractController
         return $this->render(
             'stations/index.html.twig',
             [
-                'stations' => $this->stations->find([], ['limit' => 12])->toArray(),
+                'stations' => $this->stations->find([], ['batchSize' => 1, 'limit' => 12])->toArray(),
             ],
         );
     }
