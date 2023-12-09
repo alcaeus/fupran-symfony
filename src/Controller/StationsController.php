@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Annotation\Route;
 class StationsController extends AbstractController
 {
     public function __construct(
-        #[AutowireCollection(options: ['codec' => StationCodec::class])]
+        #[AutowireCollection(codec: StationCodec::class)]
         private Collection $stations,
     ) {}
 
