@@ -56,7 +56,7 @@ class ImportPricesCommand extends Command
         }
         $end = microtime(true);
 
-        $io->success(sprintf('Inserted %d price records in %.5fs.', $result->numInserted, $end - $start));
+        $io->success(sprintf('Done in %.5fs: %d inserted, %d updated.', $end - $start, $result->numInserted, $result->numUpdated));
 
         return Command::SUCCESS;
     }
