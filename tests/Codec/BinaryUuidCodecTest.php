@@ -4,6 +4,7 @@ namespace App\Tests\Codec;
 
 use App\Codec\BinaryUuidCodec;
 use MongoDB\BSON\Binary;
+use MongoDB\Exception\UnsupportedValueException;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\UuidV1;
 use Symfony\Component\Uid\UuidV4;
@@ -31,6 +32,12 @@ final class BinaryUuidCodecTest extends TestCase
         self::assertEquals($this->uuid, $this->codec->decode($this->binaryUuid));
     }
 
+    public function testDecodeChecksDecodability(): void
+    {
+        self::expectExceptionObject(UnsupportedValueException::invalidDecodableValue(2));
+        $this->codec->decode(2);
+    }
+
     public function testEncoding(): void
     {
         self::assertTrue($this->codec->canEncode($this->uuid));
@@ -48,7 +55,23 @@ final class BinaryUuidCodecTest extends TestCase
         // Int
         self::assertFalse($this->codec->canEncode(2));
 
-        // Wrong UUID type
-        self::assertFalse($this->codec->canEncode(new UuidV1()));
+        // Not a UUID string
+        self::assertFalse($this->codec->canEncode('meh'));
+    }
+
+    public function testEncodeChecksEncodability(): void
+    {
+        self::expectExceptionObject(UnsupportedValueException::invalidEncodableValue(2));
+        $this->codec->encode(2);
+    }
+
+    public function testIgnoresVariantWhenEncodingString(): void
+    {
+        // The following UUID uses an invalid variant (e - reserved) but should nonetheless be encodable
+        $uuid = '51d4b6f1-a095-1aa0-e100-80009459e03a';
+        $encoded = new Binary(hex2bin(str_replace('-', '', $uuid)), Binary::TYPE_UUID);
+
+        self::assertTrue($this->codec->canEncode($uuid));
+        self::assertEquals($encoded, $this->codec->encode($uuid));
     }
 }
