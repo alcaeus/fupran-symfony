@@ -5,6 +5,7 @@ namespace App\Tests\Codec;
 use App\Codec\BinaryUuidCodec;
 use MongoDB\BSON\Binary;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Uid\UuidV1;
 use Symfony\Component\Uid\UuidV4;
 
 use function hex2bin;
@@ -34,5 +35,20 @@ final class BinaryUuidCodecTest extends TestCase
     {
         self::assertTrue($this->codec->canEncode($this->uuid));
         self::assertEquals($this->binaryUuid, $this->codec->encode($this->uuid));
+    }
+
+    public function testEncodingString(): void
+    {
+        self::assertTrue($this->codec->canEncode($this->stringUuid));
+        self::assertEquals($this->binaryUuid, $this->codec->encode($this->stringUuid));
+    }
+
+    public function testEncodingWrongString(): void
+    {
+        // Int
+        self::assertFalse($this->codec->canEncode(2));
+
+        // Wrong UUID type
+        self::assertFalse($this->codec->canEncode(new UuidV1()));
     }
 }
