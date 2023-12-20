@@ -352,16 +352,16 @@
         },
         {
             "name": "mongodb/symfony-bundle",
-            "version": "0.2.0",
+            "version": "0.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/mongodb-labs/symfony-mongodb.git",
-                "reference": "74668e0de6207ed473afa36e80373a1c2efc7b7c"
+                "reference": "af537c2a5c002938b58f2af3632bdbcee51ac2ac"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mongodb-labs/symfony-mongodb/zipball/74668e0de6207ed473afa36e80373a1c2efc7b7c",
-                "reference": "74668e0de6207ed473afa36e80373a1c2efc7b7c",
+                "url": "https://api.github.com/repos/mongodb-labs/symfony-mongodb/zipball/af537c2a5c002938b58f2af3632bdbcee51ac2ac",
+                "reference": "af537c2a5c002938b58f2af3632bdbcee51ac2ac",
                 "shasum": ""
             },
             "require": {
@@ -380,6 +380,8 @@
                 "symfony/filesystem": "^6.3 || ^7.0",
                 "symfony/framework-bundle": "^6.3.5 || ^7.0",
                 "symfony/phpunit-bridge": "~6.3.10 || ^6.4.1 || ^7.0.1",
+                "symfony/stopwatch": "^6.3 || ^7.0",
+                "symfony/web-profiler-bundle": "^6.3 || ^7.0",
                 "symfony/yaml": "^6.3 || ^7.0",
                 "zenstruck/browser": "^1.6"
             },
@@ -421,9 +423,9 @@
             ],
             "support": {
                 "issues": "https://github.com/mongodb-labs/symfony-mongodb/issues",
-                "source": "https://github.com/mongodb-labs/symfony-mongodb/tree/0.2.0"
+                "source": "https://github.com/mongodb-labs/symfony-mongodb/tree/0.2.1"
             },
-            "time": "2023-12-09T13:58:57+00:00"
+            "time": "2023-12-09T15:01:09+00:00"
         },
         {
             "name": "psr/cache",
@@ -3909,16 +3911,16 @@
         },
         {
             "name": "nikic/php-parser",
-            "version": "v4.17.1",
+            "version": "v4.18.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nikic/PHP-Parser.git",
-                "reference": "a6303e50c90c355c7eeee2c4a8b27fe8dc8fef1d"
+                "reference": "1bcbb2179f97633e98bbbc87044ee2611c7d7999"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/a6303e50c90c355c7eeee2c4a8b27fe8dc8fef1d",
-                "reference": "a6303e50c90c355c7eeee2c4a8b27fe8dc8fef1d",
+                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/1bcbb2179f97633e98bbbc87044ee2611c7d7999",
+                "reference": "1bcbb2179f97633e98bbbc87044ee2611c7d7999",
                 "shasum": ""
             },
             "require": {
@@ -3959,9 +3961,9 @@
             ],
             "support": {
                 "issues": "https://github.com/nikic/PHP-Parser/issues",
-                "source": "https://github.com/nikic/PHP-Parser/tree/v4.17.1"
+                "source": "https://github.com/nikic/PHP-Parser/tree/v4.18.0"
             },
-            "time": "2023-08-13T19:53:39+00:00"
+            "time": "2023-12-10T21:03:43+00:00"
         },
         {
             "name": "symfony/maker-bundle",
