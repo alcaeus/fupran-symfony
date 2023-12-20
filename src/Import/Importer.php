@@ -8,9 +8,9 @@ use MongoDB\Collection;
 use MongoDB\Driver\BulkWrite;
 use MongoDB\Driver\WriteResult;
 use Symfony\Component\Console\Output\OutputInterface;
+
 use function count;
 use function microtime;
-use const COUNT_NORMAL;
 
 abstract class Importer
 {
@@ -68,7 +68,7 @@ abstract class Importer
                 },
             );
 
-            $output?->writeln(sprintf('Read %d records in %.5f, importing now', $bulk->count(), $readTime));
+            $output?->writeln(sprintf('Read %d records in %.5f s, importing now', $bulk->count(), $readTime));
 
             $importResult = null;
             $importTime = $this->measureTime(
@@ -80,7 +80,7 @@ abstract class Importer
             );
 
             $output?->writeln(sprintf(
-                'Done in %.5fs; %d records inserted, %d updated, %d skipped.',
+                'Done in %.5f s; %d records inserted, %d updated, %d skipped.',
                 $importTime,
                 $importResult->numInserted,
                 $importResult->numUpdated,
