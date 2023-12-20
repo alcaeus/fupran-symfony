@@ -2,13 +2,19 @@
 
 namespace App\Import;
 
+use App\Codec\BinaryUuidCodec;
+use MongoDB\Bundle\Attribute\AutowireCollection;
+use MongoDB\Collection;
 use MongoDB\Driver\BulkWrite;
 
 final class StationsImporter extends Importer
 {
-    protected function getNamespace(): string
-    {
-        return $this->databaseName . '.stations';
+    public function __construct(
+        #[AutowireCollection]
+        Collection $stations,
+        private readonly BinaryUuidCodec $uuidCodec,
+    ) {
+        parent::__construct($stations);
     }
 
     protected function storeDocument(BulkWrite $bulk, array $data): void
@@ -44,7 +50,7 @@ final class StationsImporter extends Importer
     private function buildQuery(array $rawData): array
     {
         return [
-            '_id' => $this->createBinaryUuid($rawData['uuid']),
+            '_id' => $this->uuidCodec->encode($rawData['uuid']),
         ];
     }
 }

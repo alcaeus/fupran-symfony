@@ -9,10 +9,12 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+
 use function file_exists;
 use function is_dir;
 use function is_file;
 use function microtime;
+use function sprintf;
 
 #[AsCommand(
     name: 'app:import-stations',
@@ -55,11 +57,7 @@ class ImportStationsCommand extends Command
         }
         $end = microtime(true);
 
-        $io->success(sprintf(
-            'Inserted %d stations in %.5fs.',
-            $result->numInserted,
-            $end - $start,
-        ));
+        $io->success(sprintf('Done in %.5fs: %d inserted, %d updated.', $end - $start, $result->numInserted, $result->numUpdated));
 
         return Command::SUCCESS;
     }

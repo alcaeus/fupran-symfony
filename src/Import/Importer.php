@@ -2,32 +2,23 @@
 
 namespace App\Import;
 
+use Closure;
 use DirectoryIterator;
-use MongoDB\BSON\Binary;
-use MongoDB\Bundle\Attribute\AutowireDatabase;
-use MongoDB\Database;
+use MongoDB\Collection;
 use MongoDB\Driver\BulkWrite;
-use MongoDB\Driver\Manager;
+use MongoDB\Driver\WriteResult;
 use Symfony\Component\Console\Output\OutputInterface;
-use function hex2bin;
-use function str_replace;
+
+use function count;
+use function microtime;
 
 abstract class Importer
 {
-    private readonly Manager $manager;
-    protected string $databaseName;
-
     public function __construct(
-        #[AutowireDatabase]
-        Database $database,
-    ) {
-        $this->manager = $database->getManager();
-        $this->databaseName = $database->getDatabaseName();
-    }
+        private readonly Collection $collection,
+    ) {}
 
     abstract protected function storeDocument(BulkWrite $bulk, array $data): void;
-
-    abstract protected function getNamespace(): string;
 
     final public function importDirectory(string $directory, ?OutputInterface $output = null): ImportResult
     {
@@ -69,25 +60,54 @@ abstract class Importer
         try {
             $headers = fgetcsv($resource);
 
-            while ($row = fgetcsv($resource)) {
-                $this->storeDocument($bulk, array_combine($headers, $row));
-            }
-        } finally {
-            fclose($resource);
+            $readTime = $this->measureTime(
+                function () use ($resource, $bulk, $headers): void {
+                    while ($row = fgetcsv($resource)) {
+                        $this->storeDocument($bulk, array_combine($headers, $row));
+                    }
+                },
+            );
 
-            $output?->writeln(sprintf('Read %d records, importing now', $bulk->count()));
+            $output?->writeln(sprintf('Read %d records in %.5f s, importing now', $bulk->count(), $readTime));
 
-            $writeResult = $this->manager->executeBulkWrite($this->getNamespace(), $bulk);
-            $importResult = ImportResult::fromWriteResult($writeResult);
+            $importResult = null;
+            $importTime = $this->measureTime(
+                function () use (&$importResult, $bulk): void {
+                    $importResult = count($bulk)
+                        ? ImportResult::fromWriteResult($this->executeBulkWrite($bulk))
+                        : new ImportResult(0, 0);
+                },
+            );
 
-            $output?->writeln(sprintf('Inserted %d records, skipped %d records', $importResult->numInserted, $importResult->numSkipped));
+            $output?->writeln(sprintf(
+                'Done in %.5f s; %d records inserted, %d updated, %d skipped.',
+                $importTime,
+                $importResult->numInserted,
+                $importResult->numUpdated,
+                $importResult->numSkipped,
+            ));
 
             return $importResult;
+        } finally {
+            fclose($resource);
         }
     }
 
-    protected function createBinaryUuid(string $uuid): Binary
+    protected function getNamespace(): string
     {
-        return new Binary(hex2bin(str_replace('-', '', $uuid)), Binary::TYPE_UUID);
+        return sprintf('%s.%s', $this->collection->getDatabaseName(), $this->collection->getCollectionName());
+    }
+
+    private function executeBulkWrite(BulkWrite $bulk): WriteResult
+    {
+        return $this->collection->getManager()->executeBulkWrite($this->getNamespace(), $bulk);
+    }
+
+    private function measureTime(Closure $closure): float
+    {
+        $start = microtime(true);
+        $closure();
+
+        return microtime(true) - $start;
     }
 }

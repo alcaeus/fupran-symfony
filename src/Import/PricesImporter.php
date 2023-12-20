@@ -2,15 +2,23 @@
 
 namespace App\Import;
 
+use App\Codec\BinaryUuidCodec;
 use MongoDB\BSON\UTCDateTime;
+use MongoDB\Bundle\Attribute\AutowireCollection;
+use MongoDB\Collection;
 use MongoDB\Driver\BulkWrite;
+
 use function strtotime;
 
 final class PricesImporter extends Importer
 {
-    protected function getNamespace(): string
+    public function __construct(
+        #[AutowireCollection]
+        Collection $priceReports,
+        private readonly BinaryUuidCodec $uuidCodec,
+    )
     {
-        return $this->databaseName . '.priceReports';
+        parent::__construct($priceReports);
     }
 
     protected function storeDocument(BulkWrite $bulk, array $data): void
@@ -37,7 +45,7 @@ final class PricesImporter extends Importer
 
         return [
             'reportDate' => new UTCDateTime(strtotime($rawData['date']) * 1000),
-            'station' => $this->createBinaryUuid($rawData['station_uuid']),
+            'station' => $this->uuidCodec->encode($rawData['station_uuid']),
             'fuelType' => $fuelType,
             'price' => (float) $rawData[$fuelType],
         ];
